@@ -2,6 +2,13 @@
 from requests.sessions import Session
 
 
+TWITCH_BASEURL = "https://api.twitch.tv/kraken/"
+"""The baseurl for the twitch api"""
+
+TWITCH_HEADER_ACCEPT = "application/vnd.twitchtv.v3+json"
+"""The header for the ``Accept`` key to tell twitch which api version it should use"""
+
+
 class BaseSession(Session):
     """Session that stores a baseurl that will be prepended for every request
     """
@@ -34,3 +41,16 @@ class BaseSession(Session):
         r = super(BaseSession, self).request(method, fullurl, **kwargs)
         r.raise_for_status()
         return r
+
+
+class TwitchSession(BaseSession):
+    """Session for the twitch api
+    """
+
+    def __init__(self, ):
+        """Initialize a new twitch session
+
+        :raises: None
+        """
+        super(TwitchSession, self).__init__(baseurl=TWITCH_BASEURL)
+        self.headers.update({"Accept": TWITCH_HEADER_ACCEPT})
