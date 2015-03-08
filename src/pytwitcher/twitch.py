@@ -372,3 +372,109 @@ class Channel(object):
         self.banner = banner
         self.video_banner = video_banner
         self.delay = delay
+
+    def get_game(self, ):
+        """Get the game instance of the channel
+
+        :returns: the game instance
+        :rtype: :class:`Game` | None
+        :raises: None
+        """
+        ks = KrakenSession.get_instance()
+        games = ks.search_games(query=self.game, live=False)
+        for g in games:
+            if g.name == self.game:
+                return g
+
+
+class Stream(object):
+    """A stream on twitch.tv
+    """
+
+    @classmethod
+    def wrap_search(cls, response):
+        """Wrap the response from a stream search into instances
+        and return them
+
+        :param response: The response from searching a stream
+        :type response: :class:`requests.models.Response`
+        :returns: the new stream instances
+        :rtype: :class:`list` of :class:`stream`
+        :raises: None
+        """
+        streams = []
+        json = response.json()
+        streamjsons = json['streams']
+        for j in streamjsons:
+            s = cls.wrap_json(j)
+            streams.append(s)
+        return streams
+
+    @classmethod
+    def wrap_get_stream(cls, response):
+        """Wrap the response from getting a stream into an instance
+        and return it
+
+        :param response: The response from getting a stream
+        :type response: :class:`requests.models.Response`
+        :returns: the new stream instance
+        :rtype: :class:`list` of :class:`stream`
+        :raises: None
+        """
+        json = response.json()
+        s = cls.wrap_json(json['stream'])
+        return s
+
+    @classmethod
+    def wrap_json(cls, json):
+        """Create a Stream instance for the given json
+
+        :param json: the dict with the information of the stream
+        :type json: :class:`dict` | None
+        :returns: the new stream instance
+        :rtype: :class:`Stream` | None
+        :raises: None
+        """
+        if json is None:
+            return None
+        channel = Channel.wrap_json(json['channel'])
+        s = cls(game=json['game'],
+                channel=channel,
+                twitchid=json['_id'],
+                viewers=json['viewers'],
+                preview=json['preview'])
+        return s
+
+    def __init__(self, game, channel, twitchid, viewers, preview):
+        """Initialize a new stream
+
+        :param game: name of the game
+        :type game: :class:`str`
+        :param channel: the channel that is streaming
+        :type channel: :class:`Channel`
+        :param twitchid: the internal twitch id
+        :type twitchid: :class:`int`
+        :param viewers: the viewer count
+        :type viewers: :class:`int`
+        :param preview: a dict with preview picture links of the stream
+        :type preview: :class:`dict`
+        :raises: None
+        """
+        self.game = game
+        self.channel = channel
+        self.twitchid = twitchid
+        self.viewers = viewers
+        self.preview = preview
+
+    def get_game(self, ):
+        """Get the game instance of the channel
+
+        :returns: the game instance
+        :rtype: :class:`Game` | None
+        :raises: None
+        """
+        ks = KrakenSession.get_instance()
+        games = ks.search_games(query=self.game, live=False)
+        for g in games:
+            if g.name == self.game:
+                return g
