@@ -200,12 +200,12 @@ class Game(object):
         :rtype: :class:`Game`
         :raises: None
         """
-        g = Game(name=json['name'],
-                 box=json['box'],
-                 logo=json['logo'],
-                 twitchid=json['_id'],
-                 viewers=viewers,
-                 channels=channels)
+        g = cls(name=json['name'],
+                box=json['box'],
+                logo=json['logo'],
+                twitchid=json['_id'],
+                viewers=viewers,
+                channels=channels)
         return g
 
     def __init__(self, name, box, logo, twitchid, viewers=None, channels=None):
@@ -253,3 +253,88 @@ class Game(object):
         r = ks.get('streams/summary', params={'game': self.name}).json()
         self.viewers = r['viewers']
         self.channels = r['channels']
+
+
+class Channel(object):
+    """Channel on twitch.tv
+    """
+
+    @classmethod
+    def wrap_json(cls, json):
+        """Create a Channel instance for the given json
+
+        :param json: the dict with the information of the channel
+        :type json: :class:`dict`
+        :returns: the new channel instance
+        :rtype: :class:`Channel`
+        :raises: None
+        """
+        c = cls(name=json['name'],
+                status=json['status'],
+                displayname=json['display_name'],
+                game=json['game'],
+                twitchid=json['_id'],
+                views=json['views'],
+                followers=json['followers'],
+                url=json['url'],
+                language=json['language'],
+                broadcaster_language=json['broadcaster_language'],
+                mature=json['mature'],
+                logo=json['logo'],
+                banner=json['banner'],
+                video_banner=json['video_banner'],
+                delay=json['delay'])
+        return c
+
+    def __init__(self, name, status, displayname, game, twitchid, views,
+                 followers, url, language, broadcaster_language, mature,
+                 logo, banner, video_banner, delay):
+        """Initialize a new channel
+
+        :param name: The name of the channel
+        :type name: :class:`str`
+        :param status: The status
+        :type status: :class:`str`
+        :param displayname: The name displayed by the interface
+        :type displayname: :class:`str`
+        :param game: the game of the channel
+        :type game: :class:`str`
+        :param twitchid: the internal twitch id
+        :type twitchid: :class:`int`
+        :param views: the overall views
+        :type views: :class:`int`
+        :param followers: the follower count
+        :type followers: :class:`int`
+        :param url: the url to the channel
+        :type url: :class:`str`
+        :param language: the language of the channel
+        :type language: :class:`str`
+        :param broadcaster_language: the language of the broadcaster
+        :type broadcaster_language: :class:`str`
+        :param mature: If true, the channel is only for mature audiences
+        :type mature: :class:`bool`
+        :param logo: the link to the logos
+        :type logo: :class:`str`
+        :param banner: the link to the banner
+        :type banner: :class:`str`
+        :param video_banner: the link to the video banner
+        :type video_banner::class:`str`
+        :param delay: stream delay
+        :type delay: :class:`int`
+        :raises: None
+        """
+        self.name = name
+        self.status = status
+        self.displayname = displayname
+        self.game = game
+        self.twitchid = twitchid
+        self.views = views
+        self.followers = followers
+        self.url = url
+        self.language = language
+        self.broadcaster_language = broadcaster_language
+        self.mature = mature
+        self.logo = logo
+        self.banner = banner
+        self.video_banner = video_banner
+        self.delay = delay
