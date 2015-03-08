@@ -154,7 +154,7 @@ class Game(object):
         :param response: The response from searching a game
         :type response: :class:`requests.models.Response`
         :returns: the new game instances
-        :rtype: :class:`Game`
+        :rtype: :class:`list` of :class:`Game`
         :raises: None
         """
         games = []
@@ -173,7 +173,7 @@ class Game(object):
         :param response: The response for quering the top games
         :type response: :class:`requests.models.Response`
         :returns: the new game instances
-        :rtype: :class:`Game`
+        :rtype: :class:`list` of :class:`Game`
         :raises: None
         """
         games = []
@@ -258,6 +258,40 @@ class Game(object):
 class Channel(object):
     """Channel on twitch.tv
     """
+
+    @classmethod
+    def wrap_search(cls, response):
+        """Wrap the response from a channel search into instances
+        and return them
+
+        :param response: The response from searching a channel
+        :type response: :class:`requests.models.Response`
+        :returns: the new channel instances
+        :rtype: :class:`list` of :class:`channel`
+        :raises: None
+        """
+        channels = []
+        json = response.json()
+        channeljsons = json['channels']
+        for j in channeljsons:
+            c = cls.wrap_json(j)
+            channels.append(c)
+        return channels
+
+    @classmethod
+    def wrap_get_channel(cls, response):
+        """Wrap the response from getting a channel into an instance
+        and return it
+
+        :param response: The response from getting a channel
+        :type response: :class:`requests.models.Response`
+        :returns: the new channel instance
+        :rtype: :class:`list` of :class:`channel`
+        :raises: None
+        """
+        json = response.json()
+        c = cls.wrap_json(json)
+        return c
 
     @classmethod
     def wrap_json(cls, json):

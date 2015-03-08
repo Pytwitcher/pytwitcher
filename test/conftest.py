@@ -96,6 +96,22 @@ def channel2json():
     return c
 
 
+@pytest.fixture(scope="function")
+def search_channels_response(channel1json, channel2json):
+    searchjson = {"channels": [channel1json,
+                               channel2json]}
+    mockresponse = mock.Mock()
+    mockresponse.json.return_value = searchjson
+    return mockresponse
+
+
+@pytest.fixture(scope="function")
+def get_channel_response(channel1json):
+    mockresponse = mock.Mock()
+    mockresponse.json.return_value = channel1json
+    return mockresponse
+
+
 def assert_channel_equals_json(channel, json):
     assert channel.name == json['name']
     assert channel.status == json['status']
