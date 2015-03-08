@@ -30,6 +30,18 @@ class BaseSession(Session):
         self.baseurl = baseurl
         """The baseurl that gets prepended to every request url"""
 
+    @classmethod
+    def get_instance(cls, ):
+        """Get a global instance or create if it does not already exist
+
+        :returns: A session instance
+        :rtype: :class:`BaseSession`
+        :raises: None
+        """
+        if "_instance" not in cls.__dict__ or not cls._instance:
+            cls._instance = cls()
+        return cls._instance
+
     def request(self, method, url, **kwargs):
         """Constructs a :class:`requests.model.Request`, prepares it and sends it.
         Raises HTTPErrors by default.

@@ -22,3 +22,20 @@ def test_raise_httperror(mock_session_error_status):
     bs = twitch.BaseSession()
     with pytest.raises(HTTPError):
         bs.request("GET", "test")
+
+
+def test_get_instance():
+    class SubSession(twitch.BaseSession):
+        pass
+
+    bs = twitch.BaseSession.get_instance()
+    bs2 = twitch.BaseSession.get_instance()
+    assert bs is bs2
+
+    ss = SubSession.get_instance()
+    assert ss is not bs
+    delattr(twitch.BaseSession, "_instance")
+    delattr(SubSession, "_instance")
+    ss = SubSession.get_instance()
+    bs = twitch.BaseSession.get_instance()
+    assert ss is not bs
