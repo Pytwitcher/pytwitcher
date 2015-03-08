@@ -18,7 +18,7 @@ def test_request(base, url, full, mock_session):
     assert r
 
 
-def test_raise(mock_session_error_status):
+def test_raise_httperror(mock_session_error_status):
     bs = twitch.BaseSession()
     with pytest.raises(HTTPError):
         bs.request("GET", "test")

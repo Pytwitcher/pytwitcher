@@ -98,41 +98,40 @@ class APISession(BaseSession):
         return r["token"], r["sig"]
 
 
-class APIObject(object):
-    """Base class for all twitch api objects
-
-    Stores the json object internally, which can be accessed via ``__getitem__``
-    """
-
-    def __init__(self, json=None):
-        """Initialize a new APIObject
-
-        :param json:
-        :type json:
-        :raises: None
-        """
-        super(APIObject, self).__init__()
-        self._json = json or {}
-
-    def __getitem__(self, key):
-        """Get the item for the given key in the internal json
-
-        :param key: the key for accessing the item. Must be a hashable object.
-        :returns: The item for the given key
-        :raises: KeyError
-        """
-        return self._json[key]
-
-
-class Game(APIObject):
+class Game(object):
     """Game on twitch.tv
     """
 
-    def __init__(self, json):
+    def __init__(self, name, box, logo, twitchid, viewers=None, channels=None, popularity=None):
         """Initialize a new game
 
-        :param json: the json you get as a response from twitch
-        :type json: :class:`dict`
+        :param name: The name of the game
+        :type name: :class:`str`
+        :param box: Links for the box logos
+        :type box: :class:`dict`
+        :param logo: Links for the game logo
+        :type logo: :class:`dict`
+        :param twitchid: The id used by twitch
+        :type twitchid: :class:`int`
+        :param viewers: The current amount of viewers
+        :type viewers: :class:`int`
+        :param channels: The current amount of channels
+        :type channels: :class:`int`
+        :param popularity: The popularity score
+        :type popularity: :class:`int`
         :raises: None
         """
-        super(Game, self).__init__(json=json)
+        self.name = name
+        """The name of the game"""
+        self.box = box
+        """Links for the box logos"""
+        self.logo = logo
+        """Links for the logos"""
+        self.twitchid = twitchid
+        """Id used by twitch"""
+        self.viewers = viewers
+        """Current amount of viewers"""
+        self.channels = channels
+        """Current amount of channels"""
+        self.popularity = popularity
+        """Popularity score"""
