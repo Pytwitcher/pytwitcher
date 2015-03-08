@@ -143,3 +143,19 @@ class Game(object):
         """Current amount of viewers"""
         self.channels = channels
         """Current amount of channels"""
+
+        if viewers is None or channels is None:
+            self.fetch_viewers()
+
+    def fetch_viewers(self, ):
+        """Query the viewers and channels of this game and
+        set them on the object
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        ks = KrakenSession.get_instance()
+        r = ks.get("streams/summary", params={"game": self.name}).json()
+        self.viewers = r["viewers"]
+        self.channels = r["channels"]
