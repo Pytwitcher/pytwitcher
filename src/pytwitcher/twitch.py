@@ -102,7 +102,7 @@ class Game(object):
     """Game on twitch.tv
     """
 
-    def __init__(self, name, box, logo, twitchid, viewers=None, channels=None, popularity=None):
+    def __init__(self, name, box, logo, twitchid, viewers=None, channels=None):
         """Initialize a new game
 
         :param name: The name of the game
@@ -117,8 +117,6 @@ class Game(object):
         :type viewers: :class:`int`
         :param channels: The current amount of channels
         :type channels: :class:`int`
-        :param popularity: The popularity score
-        :type popularity: :class:`int`
         :raises: None
         """
         self.name = name
@@ -133,5 +131,3 @@ class Game(object):
         """Current amount of viewers"""
         self.channels = channels
         """Current amount of channels"""
-        self.popularity = popularity
-        """Popularity score"""
