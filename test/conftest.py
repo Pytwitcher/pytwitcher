@@ -128,3 +128,61 @@ def assert_channel_equals_json(channel, json):
     assert channel.banner == json['banner']
     assert channel.video_banner == json['video_banner']
     assert channel.delay == json['delay']
+
+
+@pytest.fixture(scope="function")
+def stream1json(channel1json):
+    s = {'game': 'Gaming Talk Shows',
+         'viewers': 9865,
+         '_id': 34238,
+         'preview': {"small": "test_channel-80x45.jpg",
+                     "medium": "test_channel-320x180.jpg",
+                     "large": "test_channel-640x360.jpg",
+                     "template": "test_channel-{width}x{height}.jpg"},
+         'channel': channel1json}
+    return s
+
+
+@pytest.fixture(scope="function")
+def stream2json(channel2json):
+    s = {'game': 'Tetris',
+         'viewers': 7563,
+         '_id': 145323,
+         'preview': {"small": "loremipsum-80x45.jpg",
+                     "medium": "loremipsum-320x180.jpg",
+                     "large": "loremipsum-640x360.jpg",
+                     "template": "loremipsum-{width}x{height}.jpg"},
+         'channel': channel2json}
+    return s
+
+
+@pytest.fixture(scope="function")
+def search_streams_response(stream1json, stream2json):
+    searchjson = {"streams": [stream1json,
+                               stream2json]}
+    mockresponse = mock.Mock()
+    mockresponse.json.return_value = searchjson
+    return mockresponse
+
+
+@pytest.fixture(scope="function")
+def get_stream_response(stream1json):
+    json = {"stream": stream1json}
+    mockresponse = mock.Mock()
+    mockresponse.json.return_value = json
+    return mockresponse
+
+
+@pytest.fixture(scope="function")
+def get_offline_stream_response():
+    mockresponse = mock.Mock()
+    mockresponse.json.return_value = {'stream': None}
+    return mockresponse
+
+
+def assert_stream_equals_json(stream, json):
+    assert_channel_equals_json(stream.channel, json['channel'])
+    assert stream.game == json['game']
+    assert stream.viewers == json['viewers']
+    assert stream.twitchid == json['_id']
+    assert stream.preview == json['preview']
