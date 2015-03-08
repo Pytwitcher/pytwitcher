@@ -3,7 +3,7 @@ import pytest
 from requests.exceptions import HTTPError
 from requests.sessions import Session
 
-from pytwitch import twitch
+from pytwitcher import twitch
 
 
 @pytest.mark.parametrize("base,url,full", [

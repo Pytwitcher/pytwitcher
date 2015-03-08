@@ -1,6 +1,6 @@
 import pytest
 
-from pytwitch import twitch
+from pytwitcher import twitch
 
 
 def test_getitem():

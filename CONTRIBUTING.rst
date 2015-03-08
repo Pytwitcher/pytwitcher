@@ -13,7 +13,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/storax/pytwitch/issues.
+Report bugs at https://github.com/storax/pytwitcher/issues.
 
 If you are reporting a bug, please include:
 
@@ -36,14 +36,14 @@ is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-pytwitch could always use more documentation, whether as part of the 
-official pytwitch docs, in docstrings, or even on the web in blog posts,
+pytwitcher could always use more documentation, whether as part of the 
+official pytwitcher docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/storax/pytwitch/issues.
+The best way to send feedback is to file an issue at https://github.com/storax/pytwitcher/issues.
 
 If you are proposing a feature:
 
@@ -55,13 +55,13 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `pytwitch` for
+Ready to contribute? Here's how to set up `pytwitcher` for
 local development.
 
-1. Fork_ the `pytwitch` repo on GitHub.
+1. Fork_ the `pytwitcher` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/pytwitch.git
+    $ git clone git@github.com:your_name_here/pytwitcher.git
 
 3. Create a branch for local development::
 
@@ -84,7 +84,7 @@ To get tox, just pip install it.
 
 6. Submit a pull request through the GitHub website.
 
-.. _Fork: https://github.com/storax/pytwitch/fork
+.. _Fork: https://github.com/storax/pytwitcher/fork
 
 Pull Request Guidelines
 -----------------------
@@ -96,7 +96,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 2.6, 2.7, and 3.3, and for PyPy.
-   Check https://travis-ci.org/storax/pytwitch 
+   Check https://travis-ci.org/storax/pytwitcher 
    under pull requests for active pull requests or run the ``tox`` command and
    make sure that the tests pass for all supported Python versions.
 
@@ -106,4 +106,4 @@ Tips
 
 To run a subset of tests::
 
-	 $ py.test test/test_pytwitch.py
+	 $ py.test test/test_pytwitcher.py

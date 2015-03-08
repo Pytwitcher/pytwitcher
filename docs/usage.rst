@@ -2,6 +2,6 @@
 Usage
 ========
 
-To use pytwitch in a project::
+To use pytwitcher in a project::
 
-	import pytwitch
+	import pytwitcher

@@ -5,7 +5,7 @@
 
 .. include:: ../README.rst
 
-Welcome to **pytwitch**'s documentation!
+Welcome to **pytwitcher**'s documentation!
 ==================================================================================================
 
 Contents:
@@ -26,11 +26,11 @@ Contents:
 Feedback
 --------
 
-If you have any suggestions or questions about **pytwitch** feel free to email me
+If you have any suggestions or questions about **pytwitcher** feel free to email me
 at zuber.david@gmx.de.
 
-If you encounter any errors or problems with **pytwitch**, please let me know!
-Open an Issue at the GitHub https://github.com/storax/pytwitch main repository.
+If you encounter any errors or problems with **pytwitcher**, please let me know!
+Open an Issue at the GitHub https://github.com/storax/pytwitcher main repository.
 
 Indices and tables
 ==================

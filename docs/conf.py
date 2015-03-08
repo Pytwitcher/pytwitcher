@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pytwitch'
+project = u'pytwitcher'
 copyright = u'2015, David Zuber'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -184,7 +184,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pytwitchdoc'
+htmlhelp_basename = 'pytwitcherdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -203,7 +203,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'pytwitch.tex', u'pytwitch Documentation',
+  ('index', 'pytwitcher.tex', u'pytwitcher Documentation',
    u'David Zuber', 'manual'),
 ]
 
@@ -233,7 +233,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pytwitch', u'pytwitch Documentation',
+    ('index', 'pytwitcher', u'pytwitcher Documentation',
      [u'David Zuber'], 1)
 ]
 
@@ -247,8 +247,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'pytwitch', u'pytwitch Documentation',
-   u'David Zuber', 'pytwitch', 'One line description of project.',
+  ('index', 'pytwitcher', u'pytwitcher Documentation',
+   u'David Zuber', 'pytwitcher', 'One line description of project.',
    'Miscellaneous'),
 ]
 

@@ -1,6 +1,6 @@
 from requests.sessions import Session
 
-from pytwitch import twitch
+from pytwitcher import twitch
 
 
 def test_request(mock_session):

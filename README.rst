@@ -1,21 +1,21 @@
 =========================================================
-pytwitch
+pytwitcher
 =========================================================
 
-.. image:: http://img.shields.io/pypi/v/pytwitch.png?style=flat
-    :target: https://pypi.python.org/pypi/pytwitch
+.. image:: http://img.shields.io/pypi/v/pytwitcher.png?style=flat
+    :target: https://pypi.python.org/pypi/pytwitcher
 
-.. image::  https://img.shields.io/travis/storax/pytwitch/master.png?style=flat
-    :target: https://travis-ci.org/storax/pytwitch
+.. image::  https://img.shields.io/travis/storax/pytwitcher/master.png?style=flat
+    :target: https://travis-ci.org/storax/pytwitcher
 
-.. image:: http://img.shields.io/pypi/dm/pytwitch.png?style=flat
-    :target: https://pypi.python.org/pypi/pytwitch
+.. image:: http://img.shields.io/pypi/dm/pytwitcher.png?style=flat
+    :target: https://pypi.python.org/pypi/pytwitcher
 
-.. image:: https://img.shields.io/coveralls/storax/pytwitch/master.png?style=flat
-    :target: https://coveralls.io/r/storax/pytwitch
+.. image:: https://img.shields.io/coveralls/storax/pytwitcher/master.png?style=flat
+    :target: https://coveralls.io/r/storax/pytwitcher
 
-.. image:: http://img.shields.io/pypi/l/pytwitch.png?style=flat
-    :target: https://pypi.python.org/pypi/pytwitch
+.. image:: http://img.shields.io/pypi/l/pytwitcher.png?style=flat
+    :target: https://pypi.python.org/pypi/pytwitcher
 
 
 
@@ -26,7 +26,7 @@ Python application for watching twitch.tv
 Documentation
 -------------
 
-The full documentation is at http://pytwitch.rtfd.org.
+The full documentation is at http://pytwitcher.rtfd.org.
 
 
 Features

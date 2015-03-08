@@ -24,7 +24,7 @@ clean-pyc:
 	find . -name '*~' -exec rm -f {} +
 
 lint:
-	flake8 pytwitch test
+	flake8 pytwitcher test
 
 test:
 	py.test
@@ -33,15 +33,15 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source pytwitch setup.py test
+	coverage run --source pytwitcher setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/pytwitch.rst
+	rm -f docs/pytwitcher.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ pytwitch
+	sphinx-apidoc -o docs/ pytwitcher
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html

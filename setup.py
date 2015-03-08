@@ -41,13 +41,13 @@ tests_require = ['tox']
 
 
 setup(
-    name='pytwitch',
+    name='pytwitcher',
     version='0.1.0',
     description='Python application for watching twitch.tv',
     long_description=long_description,
     author='David Zuber',
     author_email='zuber.david@gmx.de',
-    url='https://github.com/storax/pytwitch',
+    url='https://github.com/storax/pytwitcher',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
@@ -56,8 +56,8 @@ setup(
     cmdclass={'test': Tox},
     license='BSD',
     zip_safe=False,
-    keywords='pytwitch',
-    test_suite='pytwitch.test.pytwitch',
+    keywords='pytwitcher',
+    test_suite='pytwitcher.test.pytwitcher',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
