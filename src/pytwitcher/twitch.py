@@ -122,3 +122,17 @@ class APIObject(object):
         :raises: KeyError
         """
         return self._json[key]
+
+
+class Game(APIObject):
+    """Game on twitch.tv
+    """
+
+    def __init__(self, json):
+        """Initialize a new game
+
+        :param json: the json you get as a response from twitch
+        :type json: :class:`dict`
+        :raises: None
+        """
+        super(Game, self).__init__(json=json)
