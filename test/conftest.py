@@ -20,7 +20,7 @@ def mock_session_error_status(request, mock_session):
 
 @pytest.fixture(scope="function")
 def game1json():
-    return {"name": "Test", "box": {}, "logo": {}, "_id": 1252}
+    return {"name": "Gaming Talk Shows", "box": {}, "logo": {}, "_id": 1252}
 
 
 @pytest.fixture(scope="function")
