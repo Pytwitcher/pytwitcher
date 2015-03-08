@@ -73,6 +73,23 @@ class KrakenSession(BaseSession):
         super(KrakenSession, self).__init__(baseurl=TWITCH_KRAKENURL)
         self.headers.update({'Accept': TWITCH_HEADER_ACCEPT})
 
+    def search_games(self, query, live=True):
+        """Search for games that are similar to the query
+
+        :param query: the query string
+        :type query: :class:`str`
+        :param live: If true, only returns games that are live on at least one
+                     channel
+        :type live: :class:`bool`
+        :returns: A list of games
+        :rtype: :class:`list` of :class:`Game` instances
+        :raises: None
+        """
+        r = self.get('search/games', params={'query': query,
+                                             'type': 'suggests',
+                                             'live': live})
+        return Game.wrap_search(r)
+
 
 class UsherSession(BaseSession):
     """Session for the twitch usher api

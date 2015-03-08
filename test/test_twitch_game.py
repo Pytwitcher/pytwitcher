@@ -2,6 +2,7 @@ import mock
 import pytest
 
 from pytwitcher import twitch
+from conftest import assert_game_equals_json
 
 
 @pytest.fixture(scope="function")
@@ -22,33 +23,14 @@ def test_game_fetch_viewers(mock_session_get_viewers):
     bs.get.assert_called_with("streams/summary", params={"game": "Test"})
 
 
-@pytest.fixture(scope="function")
-def game1json():
-    return {"name": "Test", "box": {}, "logo": {}, "_id": 1252}
-
-
-@pytest.fixture(scope="function")
-def game2json():
-    return {"name": "Test2", "box": {}, "logo": {}, "_id": 1212}
-
-
-def assert_game_equals_json(game, json):
-    assert game.name == json["name"]
-    assert game.box == json["box"]
-    assert game.logo == json["logo"]
-    assert game.twitchid == json["_id"]
-
-
 def test_wrap_json(game1json, mock_session_get_viewers):
     g = twitch.Game.wrap_json(game1json)
     assert_game_equals_json(g, game1json)
 
 
-def test_wrap_search(game1json, game2json, mock_session_get_viewers):
-    searchjson = {"games": [game1json, game2json]}
-    mockresponse = mock.Mock()
-    mockresponse.json.return_value = searchjson
-    games = twitch.Game.wrap_search(mockresponse)
+def test_wrap_search(games_search_response, game1json, game2json,
+                     mock_session_get_viewers):
+    games = twitch.Game.wrap_search(games_search_response)
     for g, j  in zip(games, [game1json, game2json]):
         assert_game_equals_json(g, j)
 
