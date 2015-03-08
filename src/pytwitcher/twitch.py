@@ -358,20 +358,35 @@ class Channel(object):
         :raises: None
         """
         self.name = name
+        """The name of the channel"""
         self.status = status
+        """The current status message"""
         self.displayname = displayname
+        """The name displayed by the interface"""
         self.game = game
+        """The game of the channel"""
         self.twitchid = twitchid
+        """THe internal twitch id"""
         self.views = views
+        """The overall views"""
         self.followers = followers
+        """The follower count"""
         self.url = url
+        """the link to the channel page"""
         self.language = language
+        """Language of the channel"""
         self.broadcaster_language = broadcaster_language
+        """Language of the broadcaster"""
         self.mature = mature
+        """If true, the channel is only for mature audiences"""
         self.logo = logo
+        """the link to the logo"""
         self.banner = banner
+        """the link to the banner"""
         self.video_banner = video_banner
+        """the link to the video banner"""
         self.delay = delay
+        """stream delay"""
 
     def get_game(self, ):
         """Get the game instance of the channel
@@ -461,10 +476,15 @@ class Stream(object):
         :raises: None
         """
         self.game = game
+        """Name of the game that is beeing streamed"""
         self.channel = channel
+        """The channel instance"""
         self.twitchid = twitchid
+        """The internal twitch id"""
         self.viewers = viewers
+        """the viewer count"""
         self.preview = preview
+        """A dict with preview picture links of the stream"""
 
     def get_game(self, ):
         """Get the game instance of the channel
