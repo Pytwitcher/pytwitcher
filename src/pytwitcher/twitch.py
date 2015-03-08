@@ -392,15 +392,51 @@ class Stream(object):
     """
 
     @classmethod
+    def wrap_search(cls, response):
+        """Wrap the response from a stream search into instances
+        and return them
+
+        :param response: The response from searching a stream
+        :type response: :class:`requests.models.Response`
+        :returns: the new stream instances
+        :rtype: :class:`list` of :class:`stream`
+        :raises: None
+        """
+        streams = []
+        json = response.json()
+        streamjsons = json['streams']
+        for j in streamjsons:
+            s = cls.wrap_json(j)
+            streams.append(s)
+        return streams
+
+    @classmethod
+    def wrap_get_stream(cls, response):
+        """Wrap the response from getting a stream into an instance
+        and return it
+
+        :param response: The response from getting a stream
+        :type response: :class:`requests.models.Response`
+        :returns: the new stream instance
+        :rtype: :class:`list` of :class:`stream`
+        :raises: None
+        """
+        json = response.json()
+        s = cls.wrap_json(json['stream'])
+        return s
+
+    @classmethod
     def wrap_json(cls, json):
         """Create a Stream instance for the given json
 
         :param json: the dict with the information of the stream
-        :type json: :class:`dict`
+        :type json: :class:`dict` | None
         :returns: the new stream instance
-        :rtype: :class:`Stream`
+        :rtype: :class:`Stream` | None
         :raises: None
         """
+        if json is None:
+            return None
         channel = Channel.wrap_json(json['channel'])
         s = cls(game=json['game'],
                 channel=channel,
