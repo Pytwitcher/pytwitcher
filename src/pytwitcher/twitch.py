@@ -86,7 +86,7 @@ class KrakenSession(BaseSession):
         :raises: None
         """
         r = self.get('search/games', params={'query': query,
-                                             'type': 'suggests',
+                                             'type': 'suggest',
                                              'live': live})
         return Game.wrap_search(r)
 

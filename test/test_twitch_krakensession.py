@@ -29,7 +29,7 @@ def test_search_games(mock_session, games_search_response, game1json, game2json,
     Session.request.assert_called_with('GET',
                                        twitch.TWITCH_KRAKENURL + 'search/games',
                                        params={'query': 'test',
-                                               'type': 'suggests',
+                                               'type': 'suggest',
                                                'live': True},
                                        allow_redirects=True)
 
