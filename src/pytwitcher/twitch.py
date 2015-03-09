@@ -135,6 +135,22 @@ class KrakenSession(BaseSession):
                                                 'offset': offset})
         return Channel.wrap_search(r)
 
+    def get_stream(self, channel):
+        """Return the stream of the given channel
+
+        :param channel: the channel that is broadcasting.
+                        Either name or Channel instance
+        :type channel: :class:`str` | :class:`Channel`
+        :returns: the stream or None, if the channel is offline
+        :rtype: :class:`Stream` | None
+        :raises: None
+        """
+        if isinstance(channel, Channel):
+            channel = channel.name
+
+        r = self.get('streams/' + channel)
+        return Stream.wrap_get_stream(r)
+
 
 class UsherSession(BaseSession):
     """Session for the twitch usher api
