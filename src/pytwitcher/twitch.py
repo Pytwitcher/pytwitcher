@@ -173,12 +173,13 @@ class KrakenSession(BaseSession):
             game = game.name
 
         cs = []
-        for c in channels:
-            if isinstance(c, Channel):
-                c = c.name
-            cs.append(c)
-
-        cparam = ','.join(cs)
+        cparam = None
+        if channels:
+            for c in channels:
+                if isinstance(c, Channel):
+                    c = c.name
+                cs.append(c)
+            cparam = ','.join(cs)
 
         params = {'limit': limit,
                   'offset': offset}

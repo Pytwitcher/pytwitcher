@@ -104,10 +104,20 @@ def test_get_streams(mock_session, search_streams_response,
     c = twitch.Channel.wrap_json(stream1json['channel'])
     games = [game1json['name'],
              twitch.Game.wrap_json(game1json, viewers=1, channels=1)]
+    channels = [[c, 'asdf'], None]
+    params = [{'game': game1json['name'],
+              'channel': 'test_channel,asdf',
+              'limit': 35,
+              'offset': 10,
+              'client_id': 'asd412'},
+              {'game': game1json['name'],
+              'limit': 35,
+              'offset': 10,
+              'client_id': 'asd412'}]
 
-    for g in games:
+    for g, c, p in zip(games, channels, params):
         streams = ks.get_streams(game=g,
-                                 channels=[c, 'asdf'],
+                                 channels=c,
                                  limit=35,
                                  offset=10,
                                  client_id='asd412')
@@ -117,9 +127,5 @@ def test_get_streams(mock_session, search_streams_response,
 
         Session.request.assert_called_with('GET',
             twitch.TWITCH_KRAKENURL + 'streams',
-            params={'game': game1json['name'],
-                    'channel': 'test_channel,asdf',
-                    'limit':35,
-                    'offset': 10,
-                    'client_id': 'asd412'},
+            params=p,
             allow_redirects=True)
