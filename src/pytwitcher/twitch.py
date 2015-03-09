@@ -105,6 +105,18 @@ class KrakenSession(BaseSession):
                                           'offset': offset})
         return Game.wrap_topgames(r)
 
+    def get_channel(self, name):
+        """Return the channel for the given name
+
+        :param name: the channel name
+        :type name: :class:`str`
+        :returns: :class:`Channel`
+        :rtype: None
+        :raises: None
+        """
+        r = self.get('channels/' + name)
+        return Channel.wrap_get_channel(r)
+
 
 class UsherSession(BaseSession):
     """Session for the twitch usher api
