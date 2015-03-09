@@ -151,6 +151,47 @@ class KrakenSession(BaseSession):
         r = self.get('streams/' + channel)
         return Stream.wrap_get_stream(r)
 
+    def get_streams(self, game=None, channels=None, limit=25, offset=0, client_id=None):
+        """Return a list of streams queried by a number of parameters
+        sorted by number of viewers descending
+
+        :param game: the game or name of the game
+        :type game: :class:`str` | :class:`Game`
+        :param channels: list of Channels or channel names (can be mixed)
+        :type channels: :class:`list` of :class:`Channel` or :class:`str`
+        :param limit: maximum number of results
+        :type limit: :class:`int`
+        :param offset: offset for pagination
+        :type offset: :class:`int`
+        :param client_id: only show streams form applications of client_id
+        :type client_id: :class:`str`
+        :returns: A list of streams
+        :rtype: :class:`list` of :class:`Stream`
+        :raises: None
+        """
+        if isinstance(game, Game):
+            game = game.name
+
+        cs = []
+        for c in channels:
+            if isinstance(c, Channel):
+                c = c.name
+            cs.append(c)
+
+        cparam = ','.join(cs)
+
+        params = {'limit': limit,
+                  'offset': offset}
+        if game:
+            params['game'] = game
+        if cparam:
+            params['channel'] = cparam
+        if client_id:
+            params['client_id'] = client_id
+
+        r = self.get('streams', params=params)
+        return Stream.wrap_search(r)
+
 
 class UsherSession(BaseSession):
     """Session for the twitch usher api

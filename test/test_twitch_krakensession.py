@@ -90,7 +90,36 @@ def test_get_stream(mock_session, get_stream_response, stream1json):
 
     for s in [s1, s2]:
         conftest.assert_stream_equals_json(s, stream1json)
+
+    Session.request.assert_called_with('GET',
+        twitch.TWITCH_KRAKENURL + 'streams/' +
+        stream1json['channel']['name'],
+        allow_redirects=True)
+
+
+def test_get_streams(mock_session, search_streams_response,
+                     stream1json, stream2json, game1json):
+    Session.request.return_value = search_streams_response
+    ks = twitch.KrakenSession()
+    c = twitch.Channel.wrap_json(stream1json['channel'])
+    games = [game1json['name'],
+             twitch.Game.wrap_json(game1json, viewers=1, channels=1)]
+
+    for g in games:
+        streams = ks.get_streams(game=g,
+                                 channels=[c, 'asdf'],
+                                 limit=35,
+                                 offset=10,
+                                 client_id='asd412')
+
+        for s, j in zip(streams, [stream1json, stream2json]):
+            conftest.assert_stream_equals_json(s, j)
+
         Session.request.assert_called_with('GET',
-            twitch.TWITCH_KRAKENURL + 'streams/' +
-            stream1json['channel']['name'],
+            twitch.TWITCH_KRAKENURL + 'streams',
+            params={'game': game1json['name'],
+                    'channel': 'test_channel,asdf',
+                    'limit':35,
+                    'offset': 10,
+                    'client_id': 'asd412'},
             allow_redirects=True)
