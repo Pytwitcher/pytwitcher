@@ -58,5 +58,24 @@ def test_get_channel(mock_session, get_channel_response, channel1json):
     channel = ks.get_channel(channel1json['name'])
     conftest.assert_channel_equals_json(channel, channel1json)
     Session.request.assert_called_with('GET',
-                                       twitch.TWITCH_KRAKENURL + 'channels/'+ channel1json['name'],
-                                       allow_redirects=True)
+        twitch.TWITCH_KRAKENURL + 'channels/'+ channel1json['name'],
+        allow_redirects=True)
+
+
+def test_search_channels(mock_session, search_channels_response,
+                         channel1json, channel2json):
+    Session.request.return_value = search_channels_response
+    ks = twitch.KrakenSession()
+    channels = ks.search_channels(query='test',
+                                  limit=35,
+                                  offset=10)
+
+    for c, j in zip(channels, [channel1json, channel2json]):
+        conftest.assert_channel_equals_json(c, j)
+
+    Session.request.assert_called_with('GET',
+        twitch.TWITCH_KRAKENURL + 'search/channels',
+        params={'query': 'test',
+                'limit': 35,
+                'offset': 10},
+        allow_redirects=True)
