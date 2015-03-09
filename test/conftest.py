@@ -186,3 +186,30 @@ def assert_stream_equals_json(stream, json):
     assert stream.viewers == json['viewers']
     assert stream.twitchid == json['_id']
     assert stream.preview == json['preview']
+
+
+@pytest.fixture(scope="function")
+def user1json():
+    u = {'type': 'user',
+         'name': 'test_user1',
+         'logo': 'test_user1_logo.jpeg',
+         '_id': 21229404,
+         'display_name': 'test_user1',
+         'bio': 'test bio woo I am a test user'}
+    return u
+
+
+@pytest.fixture(scope="function")
+def get_user_response(user1json):
+    mockresponse = mock.Mock()
+    mockresponse.json.return_value = user1json
+    return mockresponse
+
+
+def assert_user_equals_json(user, json):
+    assert user.usertype == json['type']
+    assert user.name == json['name']
+    assert user.logo == json['logo']
+    assert user.twitchid == json['_id']
+    assert user.displayname == json['display_name']
+    assert user.bio == json['bio']
