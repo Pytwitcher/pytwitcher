@@ -498,3 +498,71 @@ class Stream(object):
         for g in games:
             if g.name == self.game:
                 return g
+
+
+class User(object):
+    """A user on twitch.tv
+    """
+
+    @classmethod
+    def wrap_get_user(cls, response):
+        """Wrap the response from getting a user into an instance
+        and return it
+
+        :param response: The response from getting a user
+        :type response: :class:`requests.models.Response`
+        :returns: the new user instance
+        :rtype: :class:`list` of :class:`user`
+        :raises: None
+        """
+        json = response.json()
+        u = cls.wrap_json(json)
+        return u
+
+    @classmethod
+    def wrap_json(cls, json):
+        """Create a User instance for the given json
+
+        :param json: the dict with the information of the user
+        :type json: :class:`dict` | None
+        :returns: the new user instance
+        :rtype: :class:`User`
+        :raises: None
+        """
+        u = cls(usertype=json['type'],
+                name=json['name'],
+                logo=json['logo'],
+                twitchid=json['_id'],
+                displayname=json['display_name'],
+                bio=json['bio'])
+        return u
+
+    def __init__(self, usertype, name, logo, twitchid, displayname, bio):
+        """Initialize a new user
+
+        :param usertype: the user type on twitch, e.g. ``"user"``
+        :type usertype: :class:`str`
+        :param name: the username
+        :type name: :class:`str`
+        :param logo: the link to the logo
+        :type logo: :class:`str`
+        :param twitchid: the internal twitch id
+        :type twitchid: :class:`int`
+        :param displayname: the name diplayed by the interface
+        :type displayname: :class:`str`
+        :param bio: the user bio
+        :type bio: :class:`str`
+        :raises: None
+        """
+        self.usertype = usertype
+        """the user type on twitch, e.g. ``"user"``"""
+        self.name = name
+        """the username"""
+        self.logo = logo
+        """link to the logo"""
+        self.twitchid = twitchid
+        """internal twitch id"""
+        self.displayname = displayname
+        """name displayed by the interface"""
+        self.bio = bio
+        """the user bio"""
