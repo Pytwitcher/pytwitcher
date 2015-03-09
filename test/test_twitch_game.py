@@ -2,7 +2,7 @@ import mock
 import pytest
 
 from pytwitcher import twitch
-from conftest import assert_game_equals_json
+from test import conftest
 
 
 @pytest.fixture(scope="function")
@@ -25,14 +25,14 @@ def test_game_fetch_viewers(mock_session_get_viewers):
 
 def test_wrap_json(game1json, mock_session_get_viewers):
     g = twitch.Game.wrap_json(game1json)
-    assert_game_equals_json(g, game1json)
+    conftest.assert_game_equals_json(g, game1json)
 
 
 def test_wrap_search(games_search_response, game1json, game2json,
                      mock_session_get_viewers):
     games = twitch.Game.wrap_search(games_search_response)
     for g, j  in zip(games, [game1json, game2json]):
-        assert_game_equals_json(g, j)
+        conftest.assert_game_equals_json(g, j)
 
 
 def test_wrap_topgames(game1json, game2json):
@@ -42,7 +42,7 @@ def test_wrap_topgames(game1json, game2json):
     mockresponse.json.return_value = topjson
     games = twitch.Game.wrap_topgames(mockresponse)
     for g, j in zip(games, [game1json, game2json]):
-        assert_game_equals_json(g, j)
+        conftest.assert_game_equals_json(g, j)
     assert games[0].viewers == 123
     assert games[0].channels == 10
     assert games[1].viewers == 543

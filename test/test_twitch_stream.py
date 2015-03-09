@@ -3,7 +3,7 @@ import pytest
 from requests.sessions import Session
 
 from pytwitcher import twitch
-import conftest
+from test import conftest
 
 
 def test_wrap_json(stream1json):
