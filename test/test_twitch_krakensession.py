@@ -109,18 +109,17 @@ def test_get_streams(mock_session, search_streams_response,
               'channel': 'test_channel,asdf',
               'limit': 35,
               'offset': 10,
-              'client_id': 'asd412'},
+              'client_id': twitch.CLIENT_ID},
               {'game': game1json['name'],
               'limit': 35,
               'offset': 10,
-              'client_id': 'asd412'}]
+              'client_id': twitch.CLIENT_ID}]
 
     for g, c, p in zip(games, channels, params):
         streams = ks.get_streams(game=g,
                                  channels=c,
                                  limit=35,
-                                 offset=10,
-                                 client_id='asd412')
+                                 offset=10)
 
         for s, j in zip(streams, [stream1json, stream2json]):
             conftest.assert_stream_equals_json(s, j)

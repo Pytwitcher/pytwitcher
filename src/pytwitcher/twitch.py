@@ -14,6 +14,9 @@ TWITCH_USHERURL = 'http://usher.twitch.tv/api/'
 TWITCH_APIURL = 'http://api.twitch.tv/api/'
 """The baseurl for the old twitch api"""
 
+CLIENT_ID = '642a2vtmqfumca8hmfcpkosxlkmqifb'
+"""The client id of pytwitcher on twitch."""
+
 
 class BaseSession(Session):
     """Session that stores a baseurl that will be prepended for every request
@@ -151,7 +154,7 @@ class KrakenSession(BaseSession):
         r = self.get('streams/' + channel)
         return Stream.wrap_get_stream(r)
 
-    def get_streams(self, game=None, channels=None, limit=25, offset=0, client_id=None):
+    def get_streams(self, game=None, channels=None, limit=25, offset=0):
         """Return a list of streams queried by a number of parameters
         sorted by number of viewers descending
 
@@ -163,8 +166,6 @@ class KrakenSession(BaseSession):
         :type limit: :class:`int`
         :param offset: offset for pagination
         :type offset: :class:`int`
-        :param client_id: only show streams form applications of client_id
-        :type client_id: :class:`str`
         :returns: A list of streams
         :rtype: :class:`list` of :class:`Stream`
         :raises: None
@@ -182,13 +183,12 @@ class KrakenSession(BaseSession):
             cparam = ','.join(cs)
 
         params = {'limit': limit,
-                  'offset': offset}
+                  'offset': offset,
+                  'client_id': CLIENT_ID}
         if game:
             params['game'] = game
         if cparam:
             params['channel'] = cparam
-        if client_id:
-            params['client_id'] = client_id
 
         r = self.get('streams', params=params)
         return Stream.wrap_search(r)
