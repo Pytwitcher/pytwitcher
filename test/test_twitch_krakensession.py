@@ -128,3 +128,25 @@ def test_get_streams(mock_session, search_streams_response,
             twitch.TWITCH_KRAKENURL + 'streams',
             params=p,
             allow_redirects=True)
+
+
+def test_search_streams(mock_session, search_streams_response,
+                        stream1json, stream2json):
+    Session.request.return_value = search_streams_response
+    ks = twitch.KrakenSession()
+    streams = ks.search_streams(query='testquery',
+                                hls=False,
+                                limit=25,
+                                offset=10)
+
+    for s, j in zip(streams, [stream1json, stream2json]):
+        conftest.assert_stream_equals_json(s, j)
+
+    p={'query': 'testquery',
+       'hls': False,
+       'limit': 25,
+       'offset': 10}
+    Session.request.assert_called_with('GET',
+            twitch.TWITCH_KRAKENURL + 'search/streams',
+            params=p,
+            allow_redirects=True)
