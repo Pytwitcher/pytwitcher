@@ -214,6 +214,18 @@ class KrakenSession(BaseSession):
                                                'offset': offset})
         return Stream.wrap_search(r)
 
+    def get_user(self, name):
+        """Get the user for the given name
+
+        :param name: The username
+        :type name: :class:`str`
+        :returns: the user instance
+        :rtype: :class:`User`
+        :raises: None
+        """
+        r = self.get('user/' + name)
+        return User.wrap_get_user(r)
+
 
 class UsherSession(BaseSession):
     """Session for the twitch usher api

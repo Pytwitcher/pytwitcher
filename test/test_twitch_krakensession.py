@@ -150,3 +150,12 @@ def test_search_streams(mock_session, search_streams_response,
             twitch.TWITCH_KRAKENURL + 'search/streams',
             params=p,
             allow_redirects=True)
+
+
+def test_get_user(mock_session, get_user_response,
+                  user1json):
+    Session.request.return_value = get_user_response
+    ks = twitch.KrakenSession()
+    user = ks.get_user('nameofuser')
+
+    conftest.assert_user_equals_json(user, user1json)
