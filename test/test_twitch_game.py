@@ -5,6 +5,17 @@ from pytwitcher import twitch
 from test import conftest
 
 
+@pytest.fixture(scope='function')
+def game():
+    n = 'Test Game'
+    g = twitch.Game(name=n, box={}, logo={}, twitchid=312, viewers=1, channels=1)
+    return g
+
+
+def test_repr(game):
+    assert repr(game) == '<Game %s, id: %s>' % (game.name, game.twitchid)
+
+
 @pytest.fixture(scope="function")
 def mock_session_get_viewers(monkeypatch):
     monkeypatch.setattr(twitch.BaseSession, "get", mock.Mock())

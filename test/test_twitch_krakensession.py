@@ -108,12 +108,10 @@ def test_get_streams(mock_session, search_streams_response,
     params = [{'game': game1json['name'],
               'channel': 'test_channel,asdf',
               'limit': 35,
-              'offset': 10,
-              'client_id': twitch.CLIENT_ID},
+              'offset': 10},
               {'game': game1json['name'],
               'limit': 35,
-              'offset': 10,
-              'client_id': twitch.CLIENT_ID}]
+              'offset': 10}]
 
     for g, c, p in zip(games, channels, params):
         streams = ks.get_streams(game=g,

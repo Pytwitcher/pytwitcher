@@ -183,14 +183,14 @@ class KrakenSession(BaseSession):
             cparam = ','.join(cs)
 
         params = {'limit': limit,
-                  'offset': offset,
-                  'client_id': CLIENT_ID}
+                  'offset': offset}
         if game:
             params['game'] = game
         if cparam:
             params['channel'] = cparam
 
         r = self.get('streams', params=params)
+        print r.json()
         return Stream.wrap_search(r)
 
     def search_streams(self, query, hls=False, limit=25, offset=0):
@@ -362,6 +362,17 @@ class Game(object):
         if viewers is None or channels is None:
             self.fetch_viewers()
 
+    def __repr__(self, ):
+        """Return the canonical string representation of the object
+
+        :returns: string representation
+        :rtype: :class:`str`
+        :raises: None
+        """
+        return '<%s %s, id: %s>' % (self.__class__.__name__,
+                                    self.name,
+                                    self.twitchid)
+
     def fetch_viewers(self, ):
         """Query the viewers and channels of this game and
         set them on the object
@@ -509,6 +520,17 @@ class Channel(object):
         self.delay = delay
         """stream delay"""
 
+    def __repr__(self, ):
+        """Return the canonical string representation of the object
+
+        :returns: string representation
+        :rtype: :class:`str`
+        :raises: None
+        """
+        return '<%s %s, id: %s>' % (self.__class__.__name__,
+                                    self.name,
+                                    self.twitchid)
+
     def get_game(self, ):
         """Get the game instance of the channel
 
@@ -607,6 +629,17 @@ class Stream(object):
         self.preview = preview
         """A dict with preview picture links of the stream"""
 
+    def __repr__(self, ):
+        """Return the canonical string representation of the object
+
+        :returns: string representation
+        :rtype: :class:`str`
+        :raises: None
+        """
+        return '<%s %s, id: %s>' % (self.__class__.__name__,
+                                    self.channel.name,
+                                    self.twitchid)
+
     def get_game(self, ):
         """Get the game instance of the channel
 
@@ -687,3 +720,14 @@ class User(object):
         """name displayed by the interface"""
         self.bio = bio
         """the user bio"""
+
+    def __repr__(self, ):
+        """Return the canonical string representation of the object
+
+        :returns: string representation
+        :rtype: :class:`str`
+        :raises: None
+        """
+        return '<%s %s, id: %s>' % (self.__class__.__name__,
+                                    self.name,
+                                    self.twitchid)

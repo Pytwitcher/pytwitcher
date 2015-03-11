@@ -6,6 +6,11 @@ from pytwitcher import twitch
 from test import conftest
 
 
+def test_repr(channel1json):
+    c = twitch.Channel.wrap_json(channel1json)
+    assert repr(c) == '<Channel %s, id: %s>' % (c.name, c.twitchid)
+
+
 def test_wrap_json(channel1json):
     c = twitch.Channel.wrap_json(channel1json)
     conftest.assert_channel_equals_json(c, channel1json)
