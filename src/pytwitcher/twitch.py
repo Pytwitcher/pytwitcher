@@ -14,6 +14,9 @@ TWITCH_USHERURL = 'http://usher.twitch.tv/api/'
 TWITCH_APIURL = 'http://api.twitch.tv/api/'
 """The baseurl for the old twitch api"""
 
+CLIENT_ID = '642a2vtmqfumca8hmfcpkosxlkmqifb'
+"""The client id of pytwitcher on twitch."""
+
 
 class BaseSession(Session):
     """Session that stores a baseurl that will be prepended for every request
@@ -104,6 +107,124 @@ class KrakenSession(BaseSession):
         r = self.get('games/top', params={'limit': limit,
                                           'offset': offset})
         return Game.wrap_topgames(r)
+
+    def get_channel(self, name):
+        """Return the channel for the given name
+
+        :param name: the channel name
+        :type name: :class:`str`
+        :returns: :class:`Channel`
+        :rtype: None
+        :raises: None
+        """
+        r = self.get('channels/' + name)
+        return Channel.wrap_get_channel(r)
+
+    def search_channels(self, query, limit=25, offset=0):
+        """Search for channels and return them
+
+        :param query: the query string
+        :type query: :class:`str`
+        :param limit: maximum number of results
+        :type limit: :class:`int`
+        :param offset: offset for pagination
+        :type offset: :class:`int`
+        :returns: A list of channels
+        :rtype: :class:`list` of :class:`Channel` instances
+        :raises: None
+        """
+        r = self.get('search/channels', params={'query': query,
+                                                'limit': limit,
+                                                'offset': offset})
+        return Channel.wrap_search(r)
+
+    def get_stream(self, channel):
+        """Return the stream of the given channel
+
+        :param channel: the channel that is broadcasting.
+                        Either name or Channel instance
+        :type channel: :class:`str` | :class:`Channel`
+        :returns: the stream or None, if the channel is offline
+        :rtype: :class:`Stream` | None
+        :raises: None
+        """
+        if isinstance(channel, Channel):
+            channel = channel.name
+
+        r = self.get('streams/' + channel)
+        return Stream.wrap_get_stream(r)
+
+    def get_streams(self, game=None, channels=None, limit=25, offset=0):
+        """Return a list of streams queried by a number of parameters
+        sorted by number of viewers descending
+
+        :param game: the game or name of the game
+        :type game: :class:`str` | :class:`Game`
+        :param channels: list of Channels or channel names (can be mixed)
+        :type channels: :class:`list` of :class:`Channel` or :class:`str`
+        :param limit: maximum number of results
+        :type limit: :class:`int`
+        :param offset: offset for pagination
+        :type offset: :class:`int`
+        :returns: A list of streams
+        :rtype: :class:`list` of :class:`Stream`
+        :raises: None
+        """
+        if isinstance(game, Game):
+            game = game.name
+
+        cs = []
+        cparam = None
+        if channels:
+            for c in channels:
+                if isinstance(c, Channel):
+                    c = c.name
+                cs.append(c)
+            cparam = ','.join(cs)
+
+        params = {'limit': limit,
+                  'offset': offset,
+                  'client_id': CLIENT_ID}
+        if game:
+            params['game'] = game
+        if cparam:
+            params['channel'] = cparam
+
+        r = self.get('streams', params=params)
+        return Stream.wrap_search(r)
+
+    def search_streams(self, query, hls=False, limit=25, offset=0):
+        """Search for streams and return them
+
+        :param query: the query string
+        :type query: :class:`str`
+        :param hls: If true, only return streams that have hls stream
+        :type hls: :class:`bool`
+        :param limit: maximum number of results
+        :type limit: :class:`int`
+        :param offset: offset for pagination
+        :type offset: :class:`int`
+        :returns: A list of streams
+        :rtype: :class:`list` of :class:`Stream` instances
+        :raises: None
+        """
+        r = self.get('search/streams', params={'query': query,
+                                               'hls': hls,
+                                               'limit': limit,
+                                               'offset': offset})
+        return Stream.wrap_search(r)
+
+    def get_user(self, name):
+        """Get the user for the given name
+
+        :param name: The username
+        :type name: :class:`str`
+        :returns: the user instance
+        :rtype: :class:`User`
+        :raises: None
+        """
+        r = self.get('user/' + name)
+        return User.wrap_get_user(r)
 
 
 class UsherSession(BaseSession):

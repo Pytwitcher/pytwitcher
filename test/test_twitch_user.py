@@ -1,5 +1,5 @@
 from pytwitcher import twitch
-import conftest
+from test import conftest
 
 
 def test_wrap_json(user1json):
