@@ -1,4 +1,5 @@
 """API for communicating with twitch"""
+import m3u8
 from requests.sessions import Session
 
 
@@ -237,6 +238,58 @@ class UsherSession(BaseSession):
         :raises: None
         """
         super(UsherSession, self).__init__(baseurl=TWITCH_USHERURL)
+
+    def get_playlist(self, channel):
+        """Return the playlist for the given channel
+
+        :param channel: the channel
+        :type channel: :class:`Channel` | :class:`str`
+        :returns: the playlist
+        :rtype: :class:`m3u8.M3U8`
+        :raises: None
+        """
+        if isinstance(channel, Channel):
+            channel = channel.name
+        apis = APISession()
+        token, sig = apis.get_channel_access_token(channel)
+        params = {'token': token, 'sig': sig,
+                  'allow_audio_only': True,
+                  'allow_source_only': True}
+        r = self.get('channel/hls/%s.m3u8' % channel, params=params)
+        playlist = m3u8.loads(r.text)
+        return playlist
+
+    def get_quality_options(self, channel):
+        """Get the available quality options for streams of the given channel
+
+        Possible values in the list:
+
+          * source
+          * high
+          * medium
+          * low
+          * mobile
+          * audio
+
+        :param channel: the channel or channel name
+        :type channel: :class:`Channel` | :class:`str`
+        :returns: list of quality options
+        :rtype: :class:`list` of :class:`str`
+        :raises: None
+        """
+        optionmap={'chunked': 'source',
+                   'high': 'high',
+                   'medium': 'medium',
+                   'low': 'low',
+                   'mobile': 'mobile',
+                   'audio_only': 'audio'}
+        p = self.get_playlist(channel)
+        print p.playlists
+        options = []
+        for pl in p.playlists:
+            q = pl.media[0].group_id
+            options.append(optionmap[q])
+        return options
 
 
 class APISession(BaseSession):
