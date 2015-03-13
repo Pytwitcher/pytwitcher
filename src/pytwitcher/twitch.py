@@ -253,12 +253,14 @@ class APISession(BaseSession):
     def get_channel_access_token(self, channel):
         """Return the token and sig for the given channel
 
-        :param channel: the channel to get the access token for
-        :type channel: :class:`str`
+        :param channel: the channel or channel name to get the access token for
+        :type channel: :class:`channel` | :class:`str`
         :returns: The token and sig for the given channel
         :rtype: (:class:`unicode`, :class:`unicode`)
         :raises: None
         """
+        if isinstance(channel, Channel):
+            channel = channel.name
         r = self.get('channels/%s/access_token' % channel).json()
         return r['token'], r['sig']
 
