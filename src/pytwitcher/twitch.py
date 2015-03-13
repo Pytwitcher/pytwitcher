@@ -191,7 +191,6 @@ class KrakenSession(BaseSession):
             params['channel'] = cparam
 
         r = self.get('streams', params=params)
-        print r.json()
         return Stream.wrap_search(r)
 
     def search_streams(self, query, hls=False, limit=25, offset=0):
@@ -284,7 +283,6 @@ class UsherSession(BaseSession):
                    'mobile': 'mobile',
                    'audio_only': 'audio'}
         p = self.get_playlist(channel)
-        print p.playlists
         options = []
         for pl in p.playlists:
             q = pl.media[0].group_id
