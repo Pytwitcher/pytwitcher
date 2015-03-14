@@ -38,6 +38,7 @@ def kraken(session):
     oldheaders = session.headers
     oldbaseurl = session.baseurl
     try:
+        session.headers = default_headers()
         session.headers['Accept'] = TWITCH_HEADER_ACCEPT
         session.baseurl = TWITCH_KRAKENURL
         yield

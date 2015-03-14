@@ -1,6 +1,7 @@
 import m3u8
 import mock
 import pytest
+from contextlib import contextmanager
 
 from requests.exceptions import HTTPError
 from requests.sessions import Session
@@ -11,8 +12,15 @@ from test import conftest
 
 
 @pytest.fixture(scope="function")
-def ts():
+def ts(mock_session):
     return twitch.TwitchSession()
+
+
+@pytest.fixture(scope="function")
+def tswithbase(ts):
+    ts.baseurl = 'someurl'
+    ts.headers['test'] = 'test'
+    return ts
 
 
 @pytest.fixture(scope="function")
@@ -65,6 +73,15 @@ def mock_get_playlist(monkeypatch):
     monkeypatch.setattr(twitch.TwitchSession, 'get_playlist', mock.Mock())
 
 
+@contextmanager
+def check_base_header(session):
+    oldbaseurl = session.baseurl
+    oldheaders = session.headers
+    yield
+    assert session.baseurl == oldbaseurl
+    assert session.headers == oldheaders
+
+
 @pytest.mark.parametrize("base,url,full", [
     ("testbase/url/", "hallo", "testbase/url/hallo"),
     ("", "hallo", "hallo"),
@@ -77,40 +94,28 @@ def test_request(ts, base, url, full, mock_session):
     assert r
 
 
-def test_request_kraken(ts, mock_session):
+def test_request_kraken(tswithbase, mock_session):
     url = "hallo"
-    oldbaseurl = 'someurl'
-    ts.baseurl = oldbaseurl
-    oldheaders = ts.headers
-    with twitch.kraken(ts):
-        ts.request("GET", url)
-        assert ts.headers['Accept'] == twitch.TWITCH_HEADER_ACCEPT
-    assert ts.baseurl == oldbaseurl
-    assert ts.headers == oldheaders
+    with check_base_header(tswithbase), twitch.kraken(tswithbase):
+        tswithbase.request("GET", url)
+        assert 'test' not in tswithbase.headers
+        assert tswithbase.headers['Accept'] == twitch.TWITCH_HEADER_ACCEPT
     Session.request.assert_called_with("GET", twitch.TWITCH_KRAKENURL + url)
 
 
-def test_request_oldapi(ts, mock_session):
+def test_request_oldapi(tswithbase, mock_session):
     url = "hallo"
-    oldbaseurl = 'someurl'
-    ts.baseurl = oldbaseurl
-    ts.headers['test'] = 'test'
-    with twitch.oldapi(ts):
-        ts.request("GET", url)
-        assert ts.headers == default_headers()
-    assert ts.baseurl == oldbaseurl
+    with check_base_header(tswithbase), twitch.oldapi(tswithbase):
+        tswithbase.request("GET", url)
+        assert tswithbase.headers == default_headers()
     Session.request.assert_called_with("GET", twitch.TWITCH_APIURL + url)
 
 
-def test_request_usher(ts, mock_session):
+def test_request_usher(tswithbase, mock_session):
     url = "hallo"
-    oldbaseurl = 'someurl'
-    ts.baseurl = oldbaseurl
-    ts.headers['test'] = 'test'
-    with twitch.usher(ts):
-        ts.request("GET", url)
-        assert ts.headers == default_headers()
-    assert ts.baseurl == oldbaseurl
+    with check_base_header(tswithbase), twitch.usher(tswithbase):
+        tswithbase.request("GET", url)
+        assert tswithbase.headers == default_headers()
     Session.request.assert_called_with("GET", twitch.TWITCH_USHERURL + url)
 
 
@@ -119,8 +124,8 @@ def test_raise_httperror(ts, mock_session_error_status):
         ts.request("GET", "test")
 
 
-def test_search_games(ts, mock_session, games_search_response, game1json, game2json,
-                      mock_fetch_viewers):
+def test_search_games(ts, games_search_response,
+                      game1json, game2json, mock_fetch_viewers):
     Session.request.return_value = games_search_response
     games = ts.search_games(query='test', live=True)
 
@@ -146,7 +151,7 @@ def test_fetch_viewers(ts, mock_session_get_viewers):
     ts.get.assert_called_with("streams/summary", params={"game": "Test"})
 
 
-def test_top_games(ts, mock_session, game1json, game2json,
+def test_top_games(ts, game1json, game2json,
                    top_games_response):
     Session.request.return_value = top_games_response
     games = ts.top_games(limit=10, offset=0)
@@ -163,14 +168,14 @@ def test_top_games(ts, mock_session, game1json, game2json,
         allow_redirects=True)
 
 
-def test_get_game(ts, mock_session, mock_fetch_viewers,
+def test_get_game(ts, mock_fetch_viewers,
                   games_search_response, game2json):
     Session.request.return_value = games_search_response
     g = ts.get_game(game2json['name'])
     conftest.assert_game_equals_json(g, game2json)
 
 
-def test_get_channel(ts, mock_session, get_channel_response, channel1json):
+def test_get_channel(ts, get_channel_response, channel1json):
     Session.request.return_value = get_channel_response
     channel = ts.get_channel(channel1json['name'])
 
@@ -180,7 +185,7 @@ def test_get_channel(ts, mock_session, get_channel_response, channel1json):
         allow_redirects=True)
 
 
-def test_search_channels(ts, mock_session, search_channels_response,
+def test_search_channels(ts, search_channels_response,
                          channel1json, channel2json):
     Session.request.return_value = search_channels_response
     channels = ts.search_channels(query='test',
@@ -198,7 +203,7 @@ def test_search_channels(ts, mock_session, search_channels_response,
         allow_redirects=True)
 
 
-def test_get_stream(ts, mock_session, get_stream_response, stream1json):
+def test_get_stream(ts, get_stream_response, stream1json):
     Session.request.return_value = get_stream_response
     s1 = ts.get_stream(stream1json['channel']['name'])
     s2 = ts.get_stream(twitch.Channel.wrap_json(stream1json['channel']))
@@ -212,13 +217,12 @@ def test_get_stream(ts, mock_session, get_stream_response, stream1json):
         allow_redirects=True)
 
 
-def test_get_streams(ts, mock_session, search_streams_response,
+def test_get_streams(ts, search_streams_response, channel1,
                      stream1json, stream2json, game1json):
     Session.request.return_value = search_streams_response
-    c = twitch.Channel.wrap_json(stream1json['channel'])
     games = [game1json['name'],
-             twitch.Game.wrap_json(game1json, viewers=1, channels=1)]
-    channels = [[c, 'asdf'], None]
+             twitch.Game.wrap_json(game1json)]
+    channels = [[channel1, 'asdf'], None]
     params = [{'game': game1json['name'],
               'channel': 'test_channel,asdf',
               'limit': 35,
@@ -242,7 +246,7 @@ def test_get_streams(ts, mock_session, search_streams_response,
             allow_redirects=True)
 
 
-def test_search_streams(ts, mock_session, search_streams_response,
+def test_search_streams(ts, search_streams_response,
                         stream1json, stream2json):
     Session.request.return_value = search_streams_response
     streams = ts.search_streams(query='testquery',
@@ -263,7 +267,7 @@ def test_search_streams(ts, mock_session, search_streams_response,
             allow_redirects=True)
 
 
-def test_get_user(ts, mock_session, get_user_response,
+def test_get_user(ts, get_user_response,
                   user1json):
     Session.request.return_value = get_user_response
     user = ts.get_user('nameofuser')
@@ -271,8 +275,8 @@ def test_get_user(ts, mock_session, get_user_response,
     conftest.assert_user_equals_json(user, user1json)
 
 
-def test_get_channel_access_token(ts, mock_session, channel1json):
-    channels = ["test_channel", twitch.Channel.wrap_json(channel1json)]
+def test_get_channel_access_token(ts, channel1):
+    channels = [channel1.name, channel1]
     mocktoken = {u'token': u'{"channel":"test_channel"}',
                  u'mobile_restricted': False,
                  u'sig': u'f63275898c8aa0b88a6e22acf95088323f006b9d'}
@@ -282,13 +286,13 @@ def test_get_channel_access_token(ts, mock_session, channel1json):
     for c in channels:
         token, sig = ts.get_channel_access_token(c)
         Session.request.assert_called_with('GET',
-            twitch.TWITCH_APIURL + 'channels/%s/access_token' % channel1json['name'],
+            twitch.TWITCH_APIURL + 'channels/%s/access_token' % channel1.name,
             allow_redirects=True)
         assert token == mocktoken['token']
         assert sig == mocktoken['sig']
 
 
-def test_get_playlist(ts, mock_session, mock_get_channel_access_token,
+def test_get_playlist(ts, mock_get_channel_access_token,
                       channel1json, playlist):
     token = 'sometoken'
     sig = 'somesig'
@@ -297,7 +301,9 @@ def test_get_playlist(ts, mock_session, mock_get_channel_access_token,
     mockresponse.text = playlist
     Session.request.return_value = mockresponse
     channels=['test_channel', twitch.Channel.wrap_json(channel1json)]
-    params={'token':token,'sig':sig,'allow_audio_only':True,'allow_source_only':True}
+    params={'token':token,'sig':sig,
+            'allow_audio_only':True,
+            'allow_source_only':True}
     mediaids=['chunked','high','medium','low','mobile','audio_only']
     for c in channels:
         p = ts.get_playlist(c)

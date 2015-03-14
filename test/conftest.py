@@ -4,6 +4,8 @@ import pytest
 from requests.sessions import Session
 from requests.models import Response
 
+from pytwitcher import twitch
+
 
 @pytest.fixture(scope="function")
 def mock_session(monkeypatch):
@@ -94,6 +96,16 @@ def channel2json():
          "views": 4976,
          "followers": 642}
     return c
+
+
+@pytest.fixture(scope="function")
+def channel1(channel1json):
+    return twitch.Channel.wrap_json(channel1json)
+
+
+@pytest.fixture(scope="function")
+def channel2(channel2json):
+    return twitch.Channel.wrap_json(channel2json)
 
 
 @pytest.fixture(scope="function")
