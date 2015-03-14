@@ -115,7 +115,7 @@ class TwitchSession(requests.Session):
         """The baseurl that gets prepended to every request url"""
 
     def request(self, method, url, **kwargs):
-        """Constructs a :class:`requests.model.Request`, prepares it and sends it.
+        """Constructs a :class:`requests.Request`, prepares it and sends it.
         Raises HTTPErrors by default.
 
         :param method: method for the new :class:`Request` object.
@@ -124,8 +124,8 @@ class TwitchSession(requests.Session):
         :type url: :class:`str`
         :param kwargs: keyword arguments of :meth:`requests.Session.request`
         :returns: a resonse object
-        :rtype: :class:`requests.model.Response`
-        :raises: :class:`requests.exceptions.HTTPError`
+        :rtype: :class:`requests.Response`
+        :raises: :class:`requests.HTTPError`
         """
         fullurl = self.baseurl + url if self.baseurl else url
         r = super(TwitchSession, self).request(method, fullurl, **kwargs)
@@ -331,7 +331,7 @@ class TwitchSession(requests.Session):
         :type channel: :class:`Channel` | :class:`str`
         :returns: the playlist
         :rtype: :class:`m3u8.M3U8`
-        :raises: :class:`requests.exceptions.HTTPError` if channel is offline.
+        :raises: :class:`requests.HTTPError` if channel is offline.
         """
         if isinstance(channel, Channel):
             channel = channel.name
@@ -361,7 +361,7 @@ class TwitchSession(requests.Session):
         :type channel: :class:`Channel` | :class:`str`
         :returns: list of quality options
         :rtype: :class:`list` of :class:`str`
-        :raises: :class:`requests.exceptions.HTTPError` if channel is offline.
+        :raises: :class:`requests.HTTPError` if channel is offline.
         """
         optionmap = {'chunked': 'source',
                      'high': 'high',
@@ -402,7 +402,7 @@ class Game(object):
         and return them
 
         :param response: The response from searching a game
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new game instances
         :rtype: :class:`list` of :class:`Game`
         :raises: None
@@ -421,7 +421,7 @@ class Game(object):
         and return them
 
         :param response: The response for quering the top games
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new game instances
         :rtype: :class:`list` of :class:`Game`
         :raises: None
@@ -510,7 +510,7 @@ class Channel(object):
         and return them
 
         :param response: The response from searching a channel
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new channel instances
         :rtype: :class:`list` of :class:`channel`
         :raises: None
@@ -529,7 +529,7 @@ class Channel(object):
         and return it
 
         :param response: The response from getting a channel
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new channel instance
         :rtype: :class:`list` of :class:`channel`
         :raises: None
@@ -655,7 +655,7 @@ class Stream(object):
         and return them
 
         :param response: The response from searching a stream
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new stream instances
         :rtype: :class:`list` of :class:`stream`
         :raises: None
@@ -674,7 +674,7 @@ class Stream(object):
         and return it
 
         :param response: The response from getting a stream
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new stream instance
         :rtype: :class:`list` of :class:`stream`
         :raises: None
@@ -751,7 +751,7 @@ class User(object):
         and return it
 
         :param response: The response from getting a user
-        :type response: :class:`requests.models.Response`
+        :type response: :class:`requests.Response`
         :returns: the new user instance
         :rtype: :class:`list` of :class:`user`
         :raises: None
