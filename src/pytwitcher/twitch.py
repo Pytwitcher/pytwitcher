@@ -245,7 +245,7 @@ class UsherSession(BaseSession):
         :type channel: :class:`Channel` | :class:`str`
         :returns: the playlist
         :rtype: :class:`m3u8.M3U8`
-        :raises: None
+        :raises: :class:`requests.exceptions.HTTPError` if channel is offline.
         """
         if isinstance(channel, Channel):
             channel = channel.name
@@ -274,7 +274,7 @@ class UsherSession(BaseSession):
         :type channel: :class:`Channel` | :class:`str`
         :returns: list of quality options
         :rtype: :class:`list` of :class:`str`
-        :raises: None
+        :raises: :class:`requests.exceptions.HTTPError` if channel is offline.
         """
         optionmap = {'chunked': 'source',
                     'high': 'high',
