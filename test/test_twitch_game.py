@@ -16,24 +16,6 @@ def test_repr(game):
     assert repr(game) == '<Game %s, id: %s>' % (game.name, game.twitchid)
 
 
-@pytest.fixture(scope="function")
-def mock_session_get_viewers(monkeypatch):
-    monkeypatch.setattr(twitch.BaseSession, "get", mock.Mock())
-    mockjson = {"viewers": 124,
-                "channels": 12}
-    mockresponse = mock.Mock()
-    mockresponse.json.return_value = mockjson
-    twitch.BaseSession.get.return_value = mockresponse
-
-
-def test_game_fetch_viewers(mock_session_get_viewers):
-    bs = twitch.BaseSession()
-    game = twitch.Game(name="Test", box={}, logo={}, twitchid=214)
-    assert game.viewers == 124
-    assert game.channels == 12
-    bs.get.assert_called_with("streams/summary", params={"game": "Test"})
-
-
 def test_wrap_json(game1json, mock_session_get_viewers):
     g = twitch.Game.wrap_json(game1json)
     conftest.assert_game_equals_json(g, game1json)

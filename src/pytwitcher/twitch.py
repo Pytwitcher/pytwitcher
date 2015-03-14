@@ -131,6 +131,20 @@ class TwitchSession(Session):
         r.raise_for_status()
         return r
 
+    def fetch_viewers(self, game):
+        """Query the viewers and channels of the given game and
+        set them on the object
+
+        :returns: the given game
+        :rtype: :class:`Game`
+        :raises: None
+        """
+        with kraken(self):
+            r = self.get('streams/summary', params={'game': game.name}).json()
+        game.viewers = r['viewers']
+        game.channels = r['channels']
+        return game
+
     def search_games(self, query, live=True):
         """Search for games that are similar to the query
 
@@ -148,7 +162,10 @@ class TwitchSession(Session):
                          params={'query': query,
                                  'type': 'suggest',
                                  'live': live})
-        return Game.wrap_search(r)
+        games = Game.wrap_search(r)
+        for g in games:
+            self.fetch_viewers(g)
+        return games
 
     def top_games(self, limit=10, offset=0):
         """Return the current top games
@@ -456,9 +473,6 @@ class Game(object):
         self.channels = channels
         """Current amount of channels"""
 
-        if viewers is None or channels is None:
-            self.fetch_viewers()
-
     def __repr__(self, ):
         """Return the canonical string representation of the object
 
@@ -469,19 +483,6 @@ class Game(object):
         return '<%s %s, id: %s>' % (self.__class__.__name__,
                                     self.name,
                                     self.twitchid)
-
-    def fetch_viewers(self, ):
-        """Query the viewers and channels of this game and
-        set them on the object
-
-        :returns: None
-        :rtype: None
-        :raises: None
-        """
-        ks = KrakenSession.get_instance()
-        r = ks.get('streams/summary', params={'game': self.name}).json()
-        self.viewers = r['viewers']
-        self.channels = r['channels']
 
 
 class Channel(object):
