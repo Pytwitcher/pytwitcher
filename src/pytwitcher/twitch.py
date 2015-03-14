@@ -1,6 +1,8 @@
 """API for communicating with twitch"""
 import m3u8
+from contextlib import contextmanager
 from requests.sessions import Session
+from requests.utils import default_headers
 
 
 TWITCH_KRAKENURL = 'https://api.twitch.tv/kraken/'
@@ -19,32 +21,97 @@ CLIENT_ID = '642a2vtmqfumca8hmfcpkosxlkmqifb'
 """The client id of pytwitcher on twitch."""
 
 
-class BaseSession(Session):
+@contextmanager
+def kraken(session):
+    """Contextmanager for a :class:`TwitchSession` to make
+    shorter requests to the Kraken API.
+
+    Sets the baseurl of the session to :data:`TWITCH_KRAKENURL`
+    and ``Accept`` in headers to :data:`TWITCH_HEADER_ACCEPT`.
+
+    :param session: the session to make use the Kraken API
+    :type session: :class:`TwitchSession`
+    :returns: None
+    :rtype: None
+    :raises: None
+    """
+    oldheaders = session.headers
+    oldbaseurl = session.baseurl
+    try:
+        session.headers['Accept'] = TWITCH_HEADER_ACCEPT
+        session.baseurl = TWITCH_KRAKENURL
+        yield
+    finally:
+        session.headers = oldheaders
+        session.baseurl = oldbaseurl
+
+
+@contextmanager
+def usher(session):
+    """Contextmanager for a :class:`TwitchSession` to make
+    shorter requests to the Usher API.
+
+    Sets the baseurl of the session to :data:`TWITCH_USHERURL`
+    and uses default headers.
+
+    :param session: the session to make use the Usher API
+    :type session: :class:`TwitchSession`
+    :returns: None
+    :rtype: None
+    :raises: None
+    """
+    oldheaders = session.headers
+    oldbaseurl = session.baseurl
+    try:
+        session.headers = default_headers()
+        session.baseurl = TWITCH_USHERURL
+        yield
+    finally:
+        session.headers = oldheaders
+        session.baseurl = oldbaseurl
+
+
+@contextmanager
+def oldapi(session):
+    """Contextmanager for a :class:`TwitchSession` to make
+    shorter requests to the old twitch API.
+
+    Sets the baseurl of the session to :data:`TWITCH_APIURL`
+    and uses default headers.
+
+    :param session: the session to make use the old API
+    :type session: :class:`TwitchSession`
+    :returns: None
+    :rtype: None
+    :raises: None
+    """
+    oldheaders = session.headers
+    oldbaseurl = session.baseurl
+    try:
+        session.headers = default_headers()
+        session.baseurl = TWITCH_APIURL
+        yield
+    finally:
+        session.headers = oldheaders
+        session.baseurl = oldbaseurl
+
+
+class TwitchSession(Session):
     """Session that stores a baseurl that will be prepended for every request
+
+    You can use the contextmanagers :func:`kraken`, :func:`usher` and
+    :func:`oldapi` to easily use the different APIs.
+    They will set the baseurl and headers.
     """
 
-    def __init__(self, baseurl=None):
-        """Initialize a new BaseSession with the given baseurl
+    def __init__(self):
+        """Initialize a new TwitchSession
 
-        :param baseurl: a url that will always be prepended for every request
-        :type baseurl: :class:`str` | None
         :raises: None
         """
-        super(BaseSession, self).__init__()
-        self.baseurl = baseurl
+        super(TwitchSession, self).__init__()
+        self.baseurl = ''
         """The baseurl that gets prepended to every request url"""
-
-    @classmethod
-    def get_instance(cls, ):
-        """Get a global instance or create if it does not already exist
-
-        :returns: A session instance
-        :rtype: :class:`BaseSession`
-        :raises: None
-        """
-        if '_instance' not in cls.__dict__ or not cls._instance:
-            cls._instance = cls()
-        return cls._instance
 
     def request(self, method, url, **kwargs):
         """Constructs a :class:`requests.model.Request`, prepares it and sends it.
@@ -60,22 +127,9 @@ class BaseSession(Session):
         :raises: :class:`requests.exceptions.HTTPError`
         """
         fullurl = self.baseurl + url if self.baseurl else url
-        r = super(BaseSession, self).request(method, fullurl, **kwargs)
+        r = super(TwitchSession, self).request(method, fullurl, **kwargs)
         r.raise_for_status()
         return r
-
-
-class KrakenSession(BaseSession):
-    """Session for the twitch kraken api
-    """
-
-    def __init__(self, ):
-        """Initialize a new kraken session
-
-        :raises: None
-        """
-        super(KrakenSession, self).__init__(baseurl=TWITCH_KRAKENURL)
-        self.headers.update({'Accept': TWITCH_HEADER_ACCEPT})
 
     def search_games(self, query, live=True):
         """Search for games that are similar to the query
@@ -89,9 +143,11 @@ class KrakenSession(BaseSession):
         :rtype: :class:`list` of :class:`Game` instances
         :raises: None
         """
-        r = self.get('search/games', params={'query': query,
-                                             'type': 'suggest',
-                                             'live': live})
+        with kraken(self):
+            r = self.get('search/games',
+                         params={'query': query,
+                                 'type': 'suggest',
+                                 'live': live})
         return Game.wrap_search(r)
 
     def top_games(self, limit=10, offset=0):
@@ -105,8 +161,10 @@ class KrakenSession(BaseSession):
         :rtype: :class:`list` of :class:`Game`
         :raises: None
         """
-        r = self.get('games/top', params={'limit': limit,
-                                          'offset': offset})
+        with kraken(self):
+            r = self.get('games/top',
+                         params={'limit': limit,
+                                 'offset': offset})
         return Game.wrap_topgames(r)
 
     def get_channel(self, name):
@@ -118,7 +176,8 @@ class KrakenSession(BaseSession):
         :rtype: None
         :raises: None
         """
-        r = self.get('channels/' + name)
+        with kraken(self):
+            r = self.get('channels/' + name)
         return Channel.wrap_get_channel(r)
 
     def search_channels(self, query, limit=25, offset=0):
@@ -134,9 +193,11 @@ class KrakenSession(BaseSession):
         :rtype: :class:`list` of :class:`Channel` instances
         :raises: None
         """
-        r = self.get('search/channels', params={'query': query,
-                                                'limit': limit,
-                                                'offset': offset})
+        with kraken(self):
+            r = self.get('search/channels',
+                         params={'query': query,
+                                 'limit': limit,
+                                 'offset': offset})
         return Channel.wrap_search(r)
 
     def get_stream(self, channel):
@@ -152,7 +213,8 @@ class KrakenSession(BaseSession):
         if isinstance(channel, Channel):
             channel = channel.name
 
-        r = self.get('streams/' + channel)
+        with kraken(self):
+            r = self.get('streams/' + channel)
         return Stream.wrap_get_stream(r)
 
     def get_streams(self, game=None, channels=None, limit=25, offset=0):
@@ -190,7 +252,8 @@ class KrakenSession(BaseSession):
         if cparam:
             params['channel'] = cparam
 
-        r = self.get('streams', params=params)
+        with kraken(self):
+            r = self.get('streams', params=params)
         return Stream.wrap_search(r)
 
     def search_streams(self, query, hls=False, limit=25, offset=0):
@@ -208,10 +271,12 @@ class KrakenSession(BaseSession):
         :rtype: :class:`list` of :class:`Stream` instances
         :raises: None
         """
-        r = self.get('search/streams', params={'query': query,
-                                               'hls': hls,
-                                               'limit': limit,
-                                               'offset': offset})
+        with kraken(self):
+            r = self.get('search/streams',
+                         params={'query': query,
+                                 'hls': hls,
+                                 'limit': limit,
+                                 'offset': offset})
         return Stream.wrap_search(r)
 
     def get_user(self, name):
@@ -223,20 +288,9 @@ class KrakenSession(BaseSession):
         :rtype: :class:`User`
         :raises: None
         """
-        r = self.get('user/' + name)
+        with kraken(self):
+            r = self.get('user/' + name)
         return User.wrap_get_user(r)
-
-
-class UsherSession(BaseSession):
-    """Session for the twitch usher api
-    """
-
-    def __init__(self, ):
-        """Initialize a new usher session
-
-        :raises: None
-        """
-        super(UsherSession, self).__init__(baseurl=TWITCH_USHERURL)
 
     def get_playlist(self, channel):
         """Return the playlist for the given channel
@@ -249,12 +303,13 @@ class UsherSession(BaseSession):
         """
         if isinstance(channel, Channel):
             channel = channel.name
-        apis = APISession()
-        token, sig = apis.get_channel_access_token(channel)
+
+        token, sig = self.get_channel_access_token(channel)
         params = {'token': token, 'sig': sig,
                   'allow_audio_only': True,
                   'allow_source_only': True}
-        r = self.get('channel/hls/%s.m3u8' % channel, params=params)
+        with usher(self):
+            r = self.get('channel/hls/%s.m3u8' % channel, params=params)
         playlist = m3u8.loads(r.text)
         return playlist
 
@@ -289,18 +344,6 @@ class UsherSession(BaseSession):
             options.append(optionmap[q])
         return options
 
-
-class APISession(BaseSession):
-    """Session for the old twitch api
-    """
-
-    def __init__(self, ):
-        """Initialize a new api session
-
-        :raises: None
-        """
-        super(APISession, self).__init__(baseurl=TWITCH_APIURL)
-
     def get_channel_access_token(self, channel):
         """Return the token and sig for the given channel
 
@@ -312,7 +355,8 @@ class APISession(BaseSession):
         """
         if isinstance(channel, Channel):
             channel = channel.name
-        r = self.get('channels/%s/access_token' % channel).json()
+        with oldapi(self):
+            r = self.get('channels/%s/access_token' % channel).json()
         return r['token'], r['sig']
 
 
