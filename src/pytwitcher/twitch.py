@@ -276,12 +276,12 @@ class UsherSession(BaseSession):
         :rtype: :class:`list` of :class:`str`
         :raises: None
         """
-        optionmap={'chunked': 'source',
-                   'high': 'high',
-                   'medium': 'medium',
-                   'low': 'low',
-                   'mobile': 'mobile',
-                   'audio_only': 'audio'}
+        optionmap = {'chunked': 'source',
+                    'high': 'high',
+                    'medium': 'medium',
+                    'low': 'low',
+                    'mobile': 'mobile',
+                    'audio_only': 'audio'}
         p = self.get_playlist(channel)
         options = []
         for pl in p.playlists:
