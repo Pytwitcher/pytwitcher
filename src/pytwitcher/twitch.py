@@ -184,6 +184,20 @@ class TwitchSession(Session):
                                  'offset': offset})
         return Game.wrap_topgames(r)
 
+    def get_game(self, name):
+        """Get the game instance for a game name
+
+        :param name: the name of the game
+        :type name: :class:`str`
+        :returns: the game instance
+        :rtype: :class:`Game` | None
+        :raises: None
+        """
+        games = self.search_games(query=name, live=False)
+        for g in games:
+            if g.name == name:
+                return g
+
     def get_channel(self, name):
         """Return the channel for the given name
 
@@ -629,19 +643,6 @@ class Channel(object):
                                     self.name,
                                     self.twitchid)
 
-    def get_game(self, ):
-        """Get the game instance of the channel
-
-        :returns: the game instance
-        :rtype: :class:`Game` | None
-        :raises: None
-        """
-        ks = KrakenSession.get_instance()
-        games = ks.search_games(query=self.game, live=False)
-        for g in games:
-            if g.name == self.game:
-                return g
-
 
 class Stream(object):
     """A stream on twitch.tv
@@ -737,19 +738,6 @@ class Stream(object):
         return '<%s %s, id: %s>' % (self.__class__.__name__,
                                     self.channel.name,
                                     self.twitchid)
-
-    def get_game(self, ):
-        """Get the game instance of the channel
-
-        :returns: the game instance
-        :rtype: :class:`Game` | None
-        :raises: None
-        """
-        ks = KrakenSession.get_instance()
-        games = ks.search_games(query=self.game, live=False)
-        for g in games:
-            if g.name == self.game:
-                return g
 
 
 class User(object):

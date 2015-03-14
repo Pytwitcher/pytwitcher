@@ -16,13 +16,12 @@ def test_repr(game):
     assert repr(game) == '<Game %s, id: %s>' % (game.name, game.twitchid)
 
 
-def test_wrap_json(game1json, mock_session_get_viewers):
+def test_wrap_json(game1json):
     g = twitch.Game.wrap_json(game1json)
     conftest.assert_game_equals_json(g, game1json)
 
 
-def test_wrap_search(games_search_response, game1json, game2json,
-                     mock_session_get_viewers):
+def test_wrap_search(games_search_response, game1json, game2json):
     games = twitch.Game.wrap_search(games_search_response)
     for g, j  in zip(games, [game1json, game2json]):
         conftest.assert_game_equals_json(g, j)
