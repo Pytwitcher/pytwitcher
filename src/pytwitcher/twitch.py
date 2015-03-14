@@ -1,9 +1,9 @@
 """API for communicating with twitch"""
-import m3u8
 import contextlib
+
+import m3u8
 import requests
 import requests.utils
-
 
 TWITCH_KRAKENURL = 'https://api.twitch.tv/kraken/'
 """The baseurl for the twitch api"""

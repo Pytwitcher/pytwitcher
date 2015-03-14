@@ -1,8 +1,8 @@
+import contextlib
+
 import m3u8
 import mock
 import pytest
-import contextlib
-
 import requests
 import requests.utils
 
