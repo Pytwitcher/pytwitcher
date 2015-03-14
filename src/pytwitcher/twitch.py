@@ -1,8 +1,8 @@
 """API for communicating with twitch"""
 import m3u8
-from contextlib import contextmanager
-from requests.sessions import Session
-from requests.utils import default_headers
+import contextlib
+import requests
+import requests.utils
 
 
 TWITCH_KRAKENURL = 'https://api.twitch.tv/kraken/'
@@ -21,7 +21,7 @@ CLIENT_ID = '642a2vtmqfumca8hmfcpkosxlkmqifb'
 """The client id of pytwitcher on twitch."""
 
 
-@contextmanager
+@contextlib.contextmanager
 def kraken(session):
     """Contextmanager for a :class:`TwitchSession` to make
     shorter requests to the Kraken API.
@@ -38,7 +38,7 @@ def kraken(session):
     oldheaders = session.headers
     oldbaseurl = session.baseurl
     try:
-        session.headers = default_headers()
+        session.headers = requests.utils.default_headers()
         session.headers['Accept'] = TWITCH_HEADER_ACCEPT
         session.baseurl = TWITCH_KRAKENURL
         yield
@@ -47,7 +47,7 @@ def kraken(session):
         session.baseurl = oldbaseurl
 
 
-@contextmanager
+@contextlib.contextmanager
 def usher(session):
     """Contextmanager for a :class:`TwitchSession` to make
     shorter requests to the Usher API.
@@ -64,7 +64,7 @@ def usher(session):
     oldheaders = session.headers
     oldbaseurl = session.baseurl
     try:
-        session.headers = default_headers()
+        session.headers = requests.utils.default_headers()
         session.baseurl = TWITCH_USHERURL
         yield
     finally:
@@ -72,7 +72,7 @@ def usher(session):
         session.baseurl = oldbaseurl
 
 
-@contextmanager
+@contextlib.contextmanager
 def oldapi(session):
     """Contextmanager for a :class:`TwitchSession` to make
     shorter requests to the old twitch API.
@@ -89,7 +89,7 @@ def oldapi(session):
     oldheaders = session.headers
     oldbaseurl = session.baseurl
     try:
-        session.headers = default_headers()
+        session.headers = requests.utils.default_headers()
         session.baseurl = TWITCH_APIURL
         yield
     finally:
@@ -97,7 +97,7 @@ def oldapi(session):
         session.baseurl = oldbaseurl
 
 
-class TwitchSession(Session):
+class TwitchSession(requests.Session):
     """Session that stores a baseurl that will be prepended for every request
 
     You can use the contextmanagers :func:`kraken`, :func:`usher` and
@@ -122,7 +122,7 @@ class TwitchSession(Session):
         :type method: :class:`str`
         :param url: URL for the new :class:`Request` object.
         :type url: :class:`str`
-        :param kwargs: keyword arguments of :meth:`requests.session.Session.request`
+        :param kwargs: keyword arguments of :meth:`requests.Session.request`
         :returns: a resonse object
         :rtype: :class:`requests.model.Response`
         :raises: :class:`requests.exceptions.HTTPError`

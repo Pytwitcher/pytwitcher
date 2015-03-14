@@ -1,8 +1,7 @@
 import mock
 import pytest
 
-from requests.sessions import Session
-from requests.models import Response
+import requests
 
 from pytwitcher import twitch
 
@@ -10,16 +9,16 @@ from pytwitcher import twitch
 @pytest.fixture(scope="function")
 def mock_session(monkeypatch):
     """Replace the request method of session with a mock."""
-    monkeypatch.setattr(Session, "request", mock.Mock())
+    monkeypatch.setattr(requests.Session, "request", mock.Mock())
 
 
 @pytest.fixture(scope="function",
                 params=[400, 499, 500, 599])
 def mock_session_error_status(request, mock_session):
     """Make sessions return a response with error codes"""
-    response = Response()
+    response = requests.Response()
     response.status_code = request.param
-    Session.request.return_value = response
+    requests.Session.request.return_value = response
 
 
 @pytest.fixture(scope="function")
