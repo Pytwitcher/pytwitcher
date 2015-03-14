@@ -364,11 +364,11 @@ class TwitchSession(Session):
         :raises: :class:`requests.exceptions.HTTPError` if channel is offline.
         """
         optionmap = {'chunked': 'source',
-                    'high': 'high',
-                    'medium': 'medium',
-                    'low': 'low',
-                    'mobile': 'mobile',
-                    'audio_only': 'audio'}
+                     'high': 'high',
+                     'medium': 'medium',
+                     'low': 'low',
+                     'mobile': 'mobile',
+                     'audio_only': 'audio'}
         p = self.get_playlist(channel)
         options = []
         for pl in p.playlists:
