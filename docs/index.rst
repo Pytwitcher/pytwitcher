@@ -30,7 +30,7 @@ If you have any suggestions or questions about **pytwitcher** feel free to email
 at zuber.david@gmx.de.
 
 If you encounter any errors or problems with **pytwitcher**, please let me know!
-Open an Issue at the GitHub https://github.com/storax/pytwitcher main repository.
+Open an Issue at the GitHub https://github.com/Pytwitcher/pytwitcher main repository.
 
 Indices and tables
 ==================

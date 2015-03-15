@@ -47,7 +47,7 @@ setup(
     long_description=long_description,
     author='David Zuber',
     author_email='zuber.david@gmx.de',
-    url='https://github.com/storax/pytwitcher',
+    url='https://github.com/Pytwitcher/pytwitcher',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
