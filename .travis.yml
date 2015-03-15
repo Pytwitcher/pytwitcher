@@ -25,3 +25,11 @@ notifications:
   email:
     on_success: never
     on_failure: never
+deploy:
+  provider: pypi
+  user: storax
+  password:
+    secure: GPvB4YNy+M5KecQDFTPjW2d7QNSAOQ+a7Ck4sRibAn3PARiGdysczoRY7mTk36OdaUVIjWf7C0xgPfA4BK0s82yP3t9iIPlrMnSYQLRoRQ2mIwntgk/qPh4+FeOFTrlWEAllQsACFgooiUmAiMlh4vkos8mueBymB2oJWGKlWgg=
+  on:
+    tags: true
+    repo: storax/pytwitcher
