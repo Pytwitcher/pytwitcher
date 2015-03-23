@@ -16,8 +16,9 @@ before_install:
   - virtualenv --version
   - pip --version
   - uname -a
-  - lsb_release -a
+  - lsb_release -ai
 install:
+  - sudo apt-get install libqt4-dev
   - pip install tox
 script:
   - tox -v
