@@ -11,7 +11,7 @@ from pytwitcher import cache
 @pytest.fixture(scope='function')
 def testsmiley():
     """Return a pixmap of the testsmiley.png"""
-    url = os.path.join(os.dirname(__file__), 'testsmiley.png')
+    url = os.path.join(os.path.dirname(__file__), 'testsmiley.png')
     return QtGui.QPixmap(url)
 
 
@@ -27,7 +27,7 @@ def mock_session(monkeypatch):
 def pixmap_response():
     """Return a mocked response that contains a picture as content"""
     m = mock.Mock()
-    url = os.path.join(os.dirname(__file__), 'testsmiley.png')
+    url = os.path.join(os.path.dirname(__file__), 'testsmiley.png')
     with open(url, 'r') as f:
         c = f.read()
     m.content = c
