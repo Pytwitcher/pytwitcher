@@ -31,7 +31,7 @@ class PixmapLoader(dict):
         :type key: :class:`str`
         :returns: the pixmap for the given url
         :rtype: :class:`QtGui.QPixmap`
-        :raises: :class:`KeyError` if the picture cannot be downloaded.
+        :raises: :class:`requests.HTTPError` if the picture cannot be downloaded.
         """
         pixmap = super(PixmapLoader, self).get(key)
         if pixmap:
