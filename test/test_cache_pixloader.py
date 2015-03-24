@@ -28,7 +28,7 @@ def pixmap_response():
     """Return a mocked response that contains a picture as content"""
     m = mock.Mock()
     url = os.path.join(os.path.dirname(__file__), 'testsmiley.png')
-    with open(url, 'r') as f:
+    with open(url, 'rb') as f:
         c = f.read()
     m.content = c
     return m
