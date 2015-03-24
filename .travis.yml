@@ -1,3 +1,4 @@
+sudo: false
 language: python
 python: 2.7
 env:
@@ -18,7 +19,6 @@ before_install:
   - uname -a
   - lsb_release -ai
 install:
-  - sudo apt-get install libqt4-dev
   - pip install tox
 script:
   - tox -v -c travistox.ini
