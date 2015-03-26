@@ -9,7 +9,7 @@ from pytwitcher import cache
 
 
 @pytest.fixture(scope='function')
-def testsmiley():
+def testsmiley(qtbot):
     """Return a pixmap of the testsmiley.png"""
     url = os.path.join(os.path.dirname(__file__), 'testsmiley.png')
     return QtGui.QPixmap(url)
@@ -41,23 +41,23 @@ def mock_pixsession(mock_session, pixmap_response):
     return mock_session
 
 
-def test_load_picture(mock_pixsession, testsmiley):
+def test_load_picture(mock_pixsession, testsmiley, qtbot):
     url = 'testurl'
     pl = cache.PixmapLoader(mock_pixsession)
 
     pixmap = pl.load_picture(url)
-    assert pixmap == testsmiley
+    assert pixmap.toImage() == testsmiley.toImage()
     mock_pixsession.request.assert_called_with('GET', url, allow_redirects=True)
 
 
-def test_get_item(mock_pixsession, testsmiley):
+def test_get_item(mock_pixsession, testsmiley, qtbot):
     url = 'testurl'
     pl = cache.PixmapLoader(mock_pixsession)
     assert url not in pl
     p = pl[url]
-    assert p == testsmiley
+    assert p.toImage() == testsmiley.toImage()
     assert url in pl
 
     p2 = pl[url]
-    assert p2 == testsmiley
+    assert p2.toImage() == testsmiley.toImage()
     mock_pixsession.request.assert_called_once_with('GET', url, allow_redirects=True)

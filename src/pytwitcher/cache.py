@@ -1,5 +1,5 @@
 """This module contains classes for caching data"""
-from PySide import QtGui
+from PySide import QtGui, QtCore
 
 
 class PixmapLoader(dict):
@@ -52,5 +52,7 @@ class PixmapLoader(dict):
         :raises: :class:`requests.HTTPError`
         """
         r = self.session.get(url)
-        c = bytearray(r.content)
-        return QtGui.QPixmap(c)
+        c = QtCore.QByteArray(r.content)
+        p = QtGui.QPixmap()
+        p.loadFromData(c)
+        return p
