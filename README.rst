@@ -4,6 +4,7 @@ pytwitcher
 
 .. image:: http://img.shields.io/pypi/v/pytwitcher.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher
+    :alt: PyPI version
 
 .. image:: https://pypip.in/py_versions/pytwitcher/badge.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher/
@@ -19,20 +20,19 @@ pytwitcher
 
 .. image:: http://img.shields.io/pypi/dm/pytwitcher.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher
+    :alt: Downloads per month
 
 .. image:: http://img.shields.io/pypi/l/pytwitcher.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher
+    :alt: License
 
+.. image:: https://readthedocs.org/projects/pytwitcher/badge/?version=latest&style=flat
+    :target: http://pytwitcher.readthedocs.org/en/latest/
+    :alt: Documentation
 
 
 
 Python application for watching twitch.tv
-
-
-Documentation
--------------
-
-The full documentation is at http://pytwitcher.rtfd.org.
 
 
 Features
