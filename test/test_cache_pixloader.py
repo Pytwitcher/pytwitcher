@@ -16,7 +16,7 @@ def testsmiley(qtbot):
 
 
 @pytest.fixture(scope='function')
-def mock_session(monkeypatch):
+def mock_session():
     """Return a session with request method mocked"""
     s = requests.Session()
     s.request = mock.Mock()
