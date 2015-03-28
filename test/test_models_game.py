@@ -6,7 +6,7 @@ from PySide import QtGui
 
 from pytwitcher import models, cache
 from pytwitcherapi import session
-
+from pytwitcherapi import models as apimodels
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -70,3 +70,19 @@ def test_get_logo(size, pixmap, mockedgame, qtbot):
     b = mockedgame.get_logo(size)
     pixmap = QtGui.QPixmap(pixmap)
     assert b.toImage() == pixmap.toImage()
+
+
+def test_from_game():
+    game = apimodels.Game(name='test',
+                       box={'small':'testbox'},
+                       logo={'medium': 'testlogo'},
+                       twitchid=1234,
+                       viewers=9999,
+                       channels=16)
+    qtgame = models.QtGame.from_game(None, None, game)
+    assert qtgame.name == game.name
+    assert qtgame.box == game.box
+    assert qtgame.logo == game.logo
+    assert qtgame.twitchid == game.twitchid
+    assert qtgame.viewers == game.viewers
+    assert qtgame.channels == game.channels

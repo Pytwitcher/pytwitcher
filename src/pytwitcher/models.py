@@ -13,6 +13,24 @@ class QtGame(models.Game):
     Automatically loads pictures and stores the topstreams.
     """
 
+    @classmethod
+    def from_game(self, session, cache, game):
+        """Create a QtGame from a :class:`pytwitcherapi.models.Game`
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param name: The name of the game
+        :param game: the game to wrap
+        :type game: :class:`pytwitcherapi.models.Game`
+        :returns: a QtGame
+        :rtype: :class:`pytwitcher.models.QtGame`
+        :raises: None
+        """
+        return QtGame(session, cache, game.name, game.box, game.logo,
+                      game.twitchid, game.viewers, game.channels)
+
     def __init__(self, session, cache, name, box, logo, twitchid, viewers=None, channels=None):
         """Initialize a new game
 
@@ -80,3 +98,6 @@ class QtGame(models.Game):
         :raises: None
         """
         raise NotImplementedError
+
+
+
