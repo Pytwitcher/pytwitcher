@@ -79,4 +79,4 @@ class QtGame(models.Game):
         :rtype: :class:`list` of :class:`QtStream`
         :raises: None
         """
-        pass
+        raise NotImplementedError
