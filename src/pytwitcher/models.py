@@ -178,7 +178,9 @@ class QtChannel(models.Channel):
         self._banner = banner
         self._video_banner = video_banner
         self.session = session
+        """The session that is used for Twitch API requests"""
         self.cache = cache
+        """The picture cache to use"""
 
     @property
     def logo(self, ):
@@ -242,3 +244,67 @@ class QtChannel(models.Channel):
         :raises: None
         """
         self._video_banner = url
+
+
+class QtStream(models.Stream):
+    """A class for twitch.tv Stream.
+
+    Automatically loads pictures.
+    """
+
+    @classmethod
+    def from_stream(self, session, cache, stream):
+        """Create a QtStream from a :class:`pytwitcherapi.models.Stream`
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param name: The name of the stream
+        :param stream: the stream to wrap
+        :type stream: :class:`pytwitcherapi.models.Stream`
+        :returns: a QtStream
+        :rtype: :class:`pytwitcher.models.QtStream`
+        :raises: None
+        """
+        channel  = QtChannel.from_channel(session, cache, stream.channel)
+        return QtStream(session, cache, stream.game, channel, stream.twitchid,
+                      stream.viewers, stream.preview)
+
+    def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
+        """Initialize a new stream
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param game: name of the game
+        :type game: :class:`str`
+        :param channel: the channel that is streaming
+        :type channel: :class:`Channel`
+        :param twitchid: the internal twitch id
+        :type twitchid: :class:`int`
+        :param viewers: the viewer count
+        :type viewers: :class:`int`
+        :param preview: a dict with preview picture links of the stream
+        :type preview: :class:`dict`
+        :raises: None
+        """
+        super(QtStream, self).__init__(game, channel, twitchid, viewers, preview)
+        self.session = session
+        """The session that is used for Twitch API requests"""
+        self.cache = cache
+        """The picture cache to use"""
+
+    def get_preview(self, size):
+        """Get a pixmap of the box logo in the requested size
+
+        :param size: The size of the pixmap. Available values are
+                     ``"large"``, ``"medium"``, ``"small"``.
+        :type size: str
+        :returns: the box logo
+        :rtype: :class:`QtGui.QPixmap`
+        :raises: :class:`KeyError` if size is wrong.
+        """
+        url = self.preview[size]
+        return self.cache[url]
