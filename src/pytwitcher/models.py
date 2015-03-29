@@ -190,6 +190,17 @@ class QtChannel(models.Channel):
         """
         return self.cache[self._logo]
 
+    @logo.setter
+    def logo(self, url):
+        """Set the logo
+
+        :param url: the url to the logo
+        :type url: :class:`str`
+        :returns: None
+        :raises: None
+        """
+        self._logo = url
+
     @property
     def banner(self, ):
         """Return the banner
@@ -200,6 +211,17 @@ class QtChannel(models.Channel):
         """
         return self.cache[self._banner]
 
+    @banner.setter
+    def banner(self, url):
+        """Set the banner
+
+        :param url: the url to the banner
+        :type url: :class:`str`
+        :returns: None
+        :raises: None
+        """
+        self._banner = url
+
     @property
     def video_banner(self, ):
         """Return the video_banner
@@ -209,3 +231,14 @@ class QtChannel(models.Channel):
         :raises: None
         """
         return self.cache[self._video_banner]
+
+    @video_banner.setter
+    def video_banner(self, url):
+        """Set the video_banner
+
+        :param url: the url to the video_banner
+        :type url: :class:`str`
+        :returns: None
+        :raises: None
+        """
+        self._video_banner = url
