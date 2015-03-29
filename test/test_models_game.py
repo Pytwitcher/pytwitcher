@@ -60,6 +60,7 @@ def mockedgame(mockedsession, filledcache):
 def test_get_box(size, pixmap, mockedgame, qtbot):
     b = mockedgame.get_box(size)
     pixmap = QtGui.QPixmap(pixmap)
+    assert b and pixmap
     assert b.toImage() == pixmap.toImage()
 
 
@@ -69,9 +70,10 @@ def test_get_box(size, pixmap, mockedgame, qtbot):
     ('large', os.path.join(thisdir,'largegamelogo.png')),
 ])
 def test_get_logo(size, pixmap, mockedgame, qtbot):
-    b = mockedgame.get_logo(size)
+    l = mockedgame.get_logo(size)
     pixmap = QtGui.QPixmap(pixmap)
-    assert b.toImage() == pixmap.toImage()
+    assert l and pixmap
+    assert l.toImage() == pixmap.toImage()
 
 
 def test_from_game(apigame1):

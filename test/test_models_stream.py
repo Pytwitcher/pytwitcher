@@ -32,6 +32,18 @@ def mockedstream(mockedsession, filledcache, mockedchannel):
     return s
 
 
+@pytest.mark.parametrize('size,pixmap', [
+    ('small', os.path.join(thisdir,'smallstreampreview.png')),
+    ('medium', os.path.join(thisdir,'mediumstreampreview.png')),
+    ('large', os.path.join(thisdir,'largestreampreview.png')),
+])
+def test_get_preview(size, pixmap, mockedstream, qtbot):
+    prev = mockedstream.get_preview(size)
+    pixmap = QtGui.QPixmap(pixmap)
+    assert prev and pixmap
+    assert prev.toImage() == pixmap.toImage()
+
+
 def test_from_stream(apistream1, apichannel1, qtbot):
     s = models.QtStream.from_stream(None, None, apistream1)
     assert s.game == apistream1.game
