@@ -57,7 +57,7 @@ class QtGame(models.Game):
         """The session that is used for Twitch API requests"""
         self.cache = cache
         """The picture cache to use"""
-        self._top_streams = []
+        self._top_streams = None
 
     def get_box(self, size):
         """Get a pixmap of the box logo in the requested size
