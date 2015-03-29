@@ -18,6 +18,17 @@ def mockedsession():
     return s
 
 
+@pytest.fixture(scope='function')
+def apigame1():
+    game = apimodels.Game(name='test',
+                          box={'small':'testbox'},
+                          logo={'medium': 'testlogo'},
+                          twitchid=1234,
+                          viewers=9999,
+                          channels=16)
+    return game
+
+
 @pytest.fixture(scope="function")
 def filledcache(mockedsession, qtbot):
     c = cache.PixmapLoader(mockedsession)
@@ -72,17 +83,11 @@ def test_get_logo(size, pixmap, mockedgame, qtbot):
     assert b.toImage() == pixmap.toImage()
 
 
-def test_from_game():
-    game = apimodels.Game(name='test',
-                       box={'small':'testbox'},
-                       logo={'medium': 'testlogo'},
-                       twitchid=1234,
-                       viewers=9999,
-                       channels=16)
-    qtgame = models.QtGame.from_game(None, None, game)
-    assert qtgame.name == game.name
-    assert qtgame.box == game.box
-    assert qtgame.logo == game.logo
-    assert qtgame.twitchid == game.twitchid
-    assert qtgame.viewers == game.viewers
-    assert qtgame.channels == game.channels
+def test_from_game(apigame1):
+    qtgame = models.QtGame.from_game(None, None, apigame1)
+    assert qtgame.name == apigame1.name
+    assert qtgame.box == apigame1.box
+    assert qtgame.logo == apigame1.logo
+    assert qtgame.twitchid == apigame1.twitchid
+    assert qtgame.viewers == apigame1.viewers
+    assert qtgame.channels == apigame1.channels
