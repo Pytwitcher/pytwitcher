@@ -1,21 +1,12 @@
 import os
 
-import mock
 import pytest
 from PySide import QtGui
 
 from pytwitcher import models, cache
-from pytwitcherapi import session
 from pytwitcherapi import models as apimodels
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
-
-
-@pytest.fixture(scope="function")
-def mockedsession():
-    s = session.TwitchSession()
-    s.request = mock.Mock()
-    return s
 
 
 @pytest.fixture(scope='function')

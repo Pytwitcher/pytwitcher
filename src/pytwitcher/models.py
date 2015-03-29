@@ -100,4 +100,112 @@ class QtGame(models.Game):
         raise NotImplementedError
 
 
+class QtChannel(models.Channel):
+    """A class for twitch.tv Channels.
 
+    Automatically loads pictures.
+    """
+
+    @classmethod
+    def from_channel(self, session, cache, channel):
+        """Create a QtChannel from a :class:`pytwitcherapi.models.Channel`
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param name: The name of the channel
+        :param channel: the channel to wrap
+        :type channel: :class:`pytwitcherapi.models.Channel`
+        :returns: a QtChannel
+        :rtype: :class:`pytwitcher.models.QtChannel`
+        :raises: None
+        """
+        return QtChannel(session, cache, channel.name, channel.status,
+                         channel.displayname, channel.game, channel.twitchid,
+                         channel.views, channel.followers, channel.url,
+                         channel.language, channel.broadcaster_language,
+                         channel.mature, channel.logo, channel.banner,
+                         channel.video_banner)
+
+    def __init__(self, session, cache, name, status, displayname, game,
+                 twitchid, views, followers, url, language,
+                 broadcaster_language, mature, logo, banner, video_banner,
+                 delay):
+        """Initialize a new game
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param name: The name of the channel
+        :type name: :class:`str`
+        :param status: The status
+        :type status: :class:`str`
+        :param displayname: The name displayed by the interface
+        :type displayname: :class:`str`
+        :param game: the game of the channel
+        :type game: :class:`str`
+        :param twitchid: the internal twitch id
+        :type twitchid: :class:`int`
+        :param views: the overall views
+        :type views: :class:`int`
+        :param followers: the follower count
+        :type followers: :class:`int`
+        :param url: the url to the channel
+        :type url: :class:`str`
+        :param language: the language of the channel
+        :type language: :class:`str`
+        :param broadcaster_language: the language of the broadcaster
+        :type broadcaster_language: :class:`str`
+        :param mature: If true, the channel is only for mature audiences
+        :type mature: :class:`bool`
+        :param logo: the link to the logos
+        :type logo: :class:`str`
+        :param banner: the link to the banner
+        :type banner: :class:`str`
+        :param video_banner: the link to the video banner
+        :type video_banner: :class:`str`
+        :param delay: stream delay
+        :type delay: :class:`int`
+        :raises: None
+        """
+        super(QtChannel, self).__init__(name, status, displayname, game,
+                                        twitchid, views, followers, url,
+                                        language, broadcaster_language, mature,
+                                        logo, banner, video_banner, delay)
+        self._logo = logo
+        self._banner = banner
+        self._video_banner = video_banner
+        self.session = session
+        self.cache = cache
+
+    @property
+    def logo(self, ):
+        """Return the logo
+
+        :returns: the logo
+        :rtype: :class:`QtGui.QPixmap`
+        :raises: None
+        """
+        return self.cache[self._logo]
+
+    @property
+    def banner(self, ):
+        """Return the banner
+
+        :returns: the banner
+        :rtype: :class:`QtGui.QPixmap`
+        :raises: None
+        """
+        return self.cache[self._banner]
+
+    @property
+    def video_banner(self, ):
+        """Return the video_banner
+
+        :returns: the video_banner
+        :rtype: :class:`QtGui.QPixmap`
+        :raises: None
+        """
+        return self.cache[self._video_banner]
