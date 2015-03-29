@@ -126,7 +126,7 @@ class QtChannel(models.Channel):
                          channel.views, channel.followers, channel.url,
                          channel.language, channel.broadcaster_language,
                          channel.mature, channel.logo, channel.banner,
-                         channel.video_banner)
+                         channel.video_banner, channel.delay)
 
     def __init__(self, session, cache, name, status, displayname, game,
                  twitchid, views, followers, url, language,

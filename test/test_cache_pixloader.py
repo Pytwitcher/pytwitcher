@@ -65,6 +65,8 @@ def test_get_item(mock_pixsession, testsmiley, qtbot):
 
 def test_get_empty_item(mock_pixsession, qtbot):
     pl = cache.PixmapLoader(mock_pixsession)
+    # empty pixmap
+    # bool(p) is False
     p = QtGui.QPixmap()
     pl['test'] = p
     p2 = pl['test']
