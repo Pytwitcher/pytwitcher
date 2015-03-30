@@ -21,9 +21,10 @@ def apichannels(apichannel1):
 
 
 def pytest_generate_tests(metafunc):
-    argnames = ['method', 'kwargs', 'returnvfixture', 'assertfunc']
+    # only generate tests for test_qtmodels
     if metafunc.function.__name__ != 'test_qtmodels':
         return
+    argnames = ['method', 'kwargs', 'returnvfixture', 'assertfunc']
     args = []
     # for each arg you append you test:
     # 1. a method
