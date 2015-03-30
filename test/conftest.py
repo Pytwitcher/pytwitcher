@@ -6,6 +6,7 @@ from PySide import QtGui
 
 from pytwitcher import models, cache, session
 from pytwitcherapi import models as apimodels
+from pytwitcherapi import session as apisession
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -88,3 +89,9 @@ def assert_stream_eq_apistream(stream, apistream):
     assert stream.viewers == apistream.viewers
     assert stream.preview == apistream.preview
     assert_channel_eq_apichannel(stream.channel, apistream.channel)
+
+
+@pytest.fixture(scope='function')
+def mock_get_streams(monkeypatch):
+    monkeypatch.setattr(apisession.TwitchSession, "get_streams", mock.Mock())
+    return apisession.TwitchSession

@@ -90,18 +90,45 @@ def test_from_game(apigame1):
 
 
 @pytest.fixture(scope='function')
-def mock_get_streams(monkeypatch):
-    monkeypatch.setattr(apisession.TwitchSession, "get_streams", mock.Mock())
-    return apisession.TwitchSession
+def apistreams(apistream1):
+    return [apistream1]
 
 
-def test_top_streams(mock_get_streams, mockedgame, apistream1):
-    apistreams = [apistream1]
+@pytest.fixture(scope='function')
+def mock_get_streams_game(mock_get_streams, apistreams):
     mock_get_streams.get_streams.return_value = apistreams
+    return mock_get_streams
+
+
+def test_top_streams(mock_get_streams_game, mockedgame, apistreams):
     streams = mockedgame.top_streams(limit=10)
     assert streams
+    # test if returned streams are correct
     for qts, apis in zip(streams, apistreams):
         conftest.assert_stream_eq_apistream(qts, apis)
         assert qts.session is mockedgame.session
         assert qts.cache is mockedgame.session.cache
-    mock_get_streams.get_streams.assert_called_with(game=mockedgame, channels=None, limit=10, offset=0)
+    # test if the function call was correct
+    mock_get_streams_game.get_streams.assert_called_with(game=mockedgame, channels=None, limit=10, offset=0)
+
+
+def test_top_streams_caching(mock_get_streams_game, mockedgame, ):
+    streams = mockedgame.top_streams(limit=1)
+    streams2 = mockedgame.top_streams(limit=25)
+    assert streams == streams2
+    assert mock_get_streams_game.get_streams.call_count == 1
+
+
+def test_top_streams_limit(mock_get_streams_game, mockedgame):
+    mockedgame.top_streams(limit=20)
+    streams2 = mockedgame.top_streams(limit=0)
+    assert streams2 == []
+    assert mock_get_streams_game.get_streams.call_count == 1
+
+
+def test_top_streams_refresh(mock_get_streams_game, mockedgame):
+    streams = mockedgame.top_streams(limit=10)
+    streams2 = mockedgame.top_streams(limit=20, force_refresh=True)
+    assert streams != streams2
+    mock_get_streams_game.get_streams.assert_called_with(game=mockedgame, channels=None, limit=20, offset=0)
+    assert mock_get_streams_game.get_streams.call_count == 2

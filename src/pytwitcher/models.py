@@ -90,6 +90,9 @@ class QtGame(models.Game):
 
         Top streams are cached and loaded the first time you call this function.
         You can force a refresh of those streams.
+        If the limit is smaller than the amount of stored streams, only the amount of limit is returned.
+        If the limit is **bigger** than the amount ofstored streams,
+        it will not trigger a refresh to load more streams!! You have to specify explicitly to refresh.
 
         :param limit: the maximum number of streams to return
         :type limit: :class:`int`
@@ -101,7 +104,7 @@ class QtGame(models.Game):
         """
         if self._top_streams is None or force_refresh:
             self._top_streams = self.session.get_streams(game=self, limit=limit)
-        return self._top_streams
+        return self._top_streams[:limit]
 
 
 class QtChannel(models.Channel):
