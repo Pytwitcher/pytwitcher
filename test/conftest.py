@@ -113,6 +113,16 @@ def assert_stream_eq_apistream(stream, apistream):
     assert_channel_eq_apichannel(stream.channel, apistream.channel)
 
 
+def assert_user_eq_apiuser(user, apiuser):
+    assert isinstance(user, models.QtUser)
+    assert user.usertype == apiuser.usertype
+    assert user.name == apiuser.name
+    assert user.logo == apiuser.logo
+    assert user.twitchid == apiuser.twitchid
+    assert user.displayname == apiuser.displayname
+    assert user.bio == apiuser.bio
+
+
 @pytest.fixture(scope='function')
 def mock_get_streams(monkeypatch):
     monkeypatch.setattr(apisession.TwitchSession, "get_streams", mock.Mock())

@@ -1,3 +1,5 @@
+import functools
+
 import mock
 import pytest
 
@@ -20,11 +22,36 @@ def apichannels(apichannel1):
     return [apichannel1]
 
 
+def assertlist(qtmodels, apimodels, assertfunc):
+    for qtm, apim in zip(qtmodels, apimodels):
+        # use the assert function
+        assertfunc(qtm, apim)
+
+
+def assertsingle(qtmodel, apimodel, assertfunc):
+    assertfunc(qtmodel, apimodel)
+
+
 def pytest_generate_tests(metafunc):
     # only generate tests for test_qtmodels
     if metafunc.function.__name__ != 'test_qtmodels':
         return
     argnames = ['method', 'kwargs', 'returnvfixture', 'assertfunc']
+    p = functools.partial
+    assertlistgame = p(assertlist, assertfunc=
+                       conftest.assert_game_eq_apigame)
+    assertliststream = p(assertlist, assertfunc=
+                         conftest.assert_stream_eq_apistream)
+    assertlistchannel = p(assertlist, assertfunc=
+                          conftest.assert_channel_eq_apichannel)
+    assertsinglegame = p(assertsingle, assertfunc=
+                         conftest.assert_game_eq_apigame)
+    assertsinglestream = p(assertsingle, assertfunc=
+                           conftest.assert_stream_eq_apistream)
+    assertsinglechannel = p(assertsingle, assertfunc=
+                            conftest.assert_channel_eq_apichannel)
+    assertsingleuser = p(assertsingle, assertfunc=
+                         conftest.assert_user_eq_apiuser)
     args = []
     # for each arg you append you test:
     # 1. a method
@@ -34,25 +61,42 @@ def pytest_generate_tests(metafunc):
     args.append(('search_games',
                  {'query': 'THC', 'live': False},
                  'apigames',
-                 conftest.assert_game_eq_apigame))
+                 assertlistgame))
     args.append(('top_games',
                  {'limit': 20, 'offset': 100},
                  'apigames',
-                 conftest.assert_game_eq_apigame))
+                 assertlistgame))
     args.append(('get_streams',
                  {'game': 'Test', 'channels': ['c1', 'c2'],
                   'limit': 12, 'offset': 24},
                  'apistreams',
-                 conftest.assert_stream_eq_apistream))
+                 assertliststream))
     args.append(('search_streams',
                  {'query': 'streams?', 'hls': True,
                   'limit': 11, 'offset': 23},
                  'apistreams',
-                 conftest.assert_stream_eq_apistream))
+                 assertliststream))
     args.append(('search_channels',
                  {'query': 'Haha', 'limit': 12, 'offset': 2},
                  'apichannels',
-                 conftest.assert_channel_eq_apichannel))
+                 assertlistchannel))
+    args.append(('get_game',
+                 {'name': 'somegame'},
+                 'apigame1',
+                 assertsinglegame))
+    args.append(('get_channel',
+                 {'name': 'somechannel'},
+                 'apichannel1',
+                 assertsinglechannel))
+    args.append(('get_stream',
+                 {'name': 'somestream'},
+                 'apistream1',
+                 assertsinglestream))
+    args.append(('get_user',
+                 {'name': 'someuser'},
+                 'apiuser1',
+                 assertsingleuser))
+
     metafunc.parametrize(argnames, args)
 
 
@@ -69,10 +113,6 @@ def test_qtmodels(method, kwargs, returnvfixture, assertfunc,
     # assert that the list is not empty
     assert rvalues
     # for each returned value check if they resemble the one of the fixture
-    for qtm, apim in zip(rvalues, returnv):
-        # use the assert function
-        assertfunc(qtm, apim)
-        assert qtm.session is mockedsession
-        assert qtm.cache is mockedsession.cache
+    assertfunc(rvalues, returnv)
     # check if the call was made correctly
     m.assert_called_with(**kwargs)
