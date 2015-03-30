@@ -19,6 +19,17 @@ def mockedsession():
 
 
 @pytest.fixture(scope='function')
+def apigame1():
+    game = apimodels.Game(name='test',
+                          box={'small':'testbox'},
+                          logo={'medium': 'testlogo'},
+                          twitchid=1234,
+                          viewers=9999,
+                          channels=16)
+    return game
+
+
+@pytest.fixture(scope='function')
 def apichannel1():
     channel = apimodels.Channel(name='test', status='good', displayname='thc',
         game='LoL', twitchid=6312, views=1234, followers=12, url='testurl',
@@ -63,7 +74,18 @@ def mockedchannel(mockedsession, filledchannelcache):
     return c
 
 
+def assert_game_eq_apigame(game, apigame):
+    assert isinstance(game, models.QtGame)
+    assert game.name == apigame.name
+    assert game.box == apigame.box
+    assert game.logo == apigame.logo
+    assert game.twitchid == apigame.twitchid
+    assert game.viewers == apigame.viewers
+    assert game.channels == apigame.channels
+
+
 def assert_channel_eq_apichannel(channel, apichannel):
+    assert isinstance(channel, models.QtChannel)
     assert channel.name == apichannel.name
     assert channel.status == apichannel.status
     assert channel.displayname == apichannel.displayname

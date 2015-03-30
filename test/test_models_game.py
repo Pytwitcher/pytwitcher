@@ -5,20 +5,8 @@ from PySide import QtGui
 
 from test import conftest
 from pytwitcher import models, cache
-from pytwitcherapi import models as apimodels
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
-
-
-@pytest.fixture(scope='function')
-def apigame1():
-    game = apimodels.Game(name='test',
-                          box={'small':'testbox'},
-                          logo={'medium': 'testlogo'},
-                          twitchid=1234,
-                          viewers=9999,
-                          channels=16)
-    return game
 
 
 @pytest.fixture(scope="function")
