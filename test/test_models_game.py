@@ -1,13 +1,11 @@
 import os
 
-import mock
 import pytest
 from PySide import QtGui
 
 from test import conftest
 from pytwitcher import models, cache
 from pytwitcherapi import models as apimodels
-from pytwitcherapi import session as apisession
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
