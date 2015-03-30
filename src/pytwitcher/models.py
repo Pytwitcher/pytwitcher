@@ -99,7 +99,9 @@ class QtGame(models.Game):
         :rtype: :class:`list` of :class:`QtStream`
         :raises: None
         """
-        raise NotImplementedError
+        if self._top_streams is None or force_refresh:
+            self._top_streams = self.session.get_streams(game=self, limit=limit)
+        return self._top_streams
 
 
 class QtChannel(models.Channel):

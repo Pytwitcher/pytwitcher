@@ -95,13 +95,13 @@ def mock_get_streams(monkeypatch):
     return apisession.TwitchSession
 
 
-def test_top_streams(mockedgame, mock_get_streams, apistream1):
+def test_top_streams(mock_get_streams, mockedgame, apistream1):
     apistreams = [apistream1]
-    mock_get_streams.get_streams.returnvalue = apistreams
+    mock_get_streams.get_streams.return_value = apistreams
     streams = mockedgame.top_streams(limit=10)
     assert streams
     for qts, apis in zip(streams, apistreams):
         conftest.assert_stream_eq_apistream(qts, apis)
         assert qts.session is mockedgame.session
-        assert qts.cache is mockedgame.cache
-    mock_get_streams.get_streams.assert_called_with(game='TestGame', limit=10)
+        assert qts.cache is mockedgame.session.cache
+    mock_get_streams.get_streams.assert_called_with(game=mockedgame, channels=None, limit=10, offset=0)
