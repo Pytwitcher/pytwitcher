@@ -1,10 +1,13 @@
 import os
 
+import mock
 import pytest
 from PySide import QtGui
 
+from test import conftest
 from pytwitcher import models, cache
 from pytwitcherapi import models as apimodels
+from pytwitcherapi import session as apisession
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -84,3 +87,21 @@ def test_from_game(apigame1):
     assert qtgame.twitchid == apigame1.twitchid
     assert qtgame.viewers == apigame1.viewers
     assert qtgame.channels == apigame1.channels
+
+
+@pytest.fixture(scope='function')
+def mock_get_streams(monkeypatch):
+    monkeypatch.setattr(apisession.Session, "get_streams", mock.Mock())
+    return apisession.Session
+
+
+def test_top_streams(mockedgame, mock_get_streams, apistream1):
+    apistreams = [apistream1]
+    mock_get_streams.get_streams.returnvalue = apistreams
+    streams = mockedgame.top_streams(limit=10)
+    assert streams
+    for qts, apis in zip(streams, apistreams):
+        conftest.assert_stream_eq_apistream(qts, apis)
+        assert qts.session is mockedgame.session
+        assert qts.cache is mockedgame.cache
+    mock_get_streams.get_streams.assert_called_with(game='TestGame', limit=10)

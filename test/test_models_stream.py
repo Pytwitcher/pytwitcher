@@ -46,9 +46,4 @@ def test_get_preview(size, pixmap, mockedstream, qtbot):
 
 def test_from_stream(apistream1, apichannel1, qtbot):
     s = models.QtStream.from_stream(None, None, apistream1)
-    assert s.game == apistream1.game
-    assert isinstance(s.channel, models.QtChannel)
-    conftest.assert_channel_eq_apichannel(s.channel, apichannel1)
-    assert s.twitchid == apistream1.twitchid
-    assert s.viewers == apistream1.viewers
-    assert s.preview == apistream1.preview
+    conftest.assert_stream_eq_apistream(s, apistream1)

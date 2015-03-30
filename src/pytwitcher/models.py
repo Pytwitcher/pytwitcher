@@ -85,12 +85,14 @@ class QtGame(models.Game):
         url = self.logo[size]
         return self.cache[url]
 
-    def top_streams(self, force_refresh=False):
+    def top_streams(self, limit=25, force_refresh=False):
         """Get the top streams of this game
 
         Top streams are cached and loaded the first time you call this function.
         You can force a refresh of those streams.
 
+        :param limit: the maximum number of streams to return
+        :type limit: :class:`int`
         :param force_refresh: If True, refresh all values.
         :type force_refresh: :class:`bool`
         :returns: a list of top streams

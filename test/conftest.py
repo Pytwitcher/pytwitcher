@@ -4,8 +4,7 @@ import mock
 import pytest
 from PySide import QtGui
 
-from pytwitcher import models, cache
-from pytwitcherapi import session
+from pytwitcher import models, cache, session
 from pytwitcherapi import models as apimodels
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
@@ -13,7 +12,7 @@ thisdir = os.path.abspath(os.path.dirname(__file__))
 
 @pytest.fixture(scope="function")
 def mockedsession():
-    s = session.TwitchSession()
+    s = session.QtTwitchSession()
     s.request = mock.Mock()
     return s
 
@@ -79,3 +78,13 @@ def assert_channel_eq_apichannel(channel, apichannel):
     assert channel._banner == apichannel.banner
     assert channel._video_banner == apichannel.video_banner
     assert channel.delay == apichannel.delay
+
+
+def assert_stream_eq_apistream(stream, apistream):
+    assert isinstance(stream, models.QtStream)
+    assert stream.game == apistream.game
+    assert isinstance(stream.channel, models.QtChannel)
+    assert stream.twitchid == apistream.twitchid
+    assert stream.viewers == apistream.viewers
+    assert stream.preview == apistream.preview
+    assert_channel_eq_apichannel(stream.channel, apistream.channel)
