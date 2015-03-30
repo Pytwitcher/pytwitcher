@@ -91,8 +91,8 @@ def test_from_game(apigame1):
 
 @pytest.fixture(scope='function')
 def mock_get_streams(monkeypatch):
-    monkeypatch.setattr(apisession.Session, "get_streams", mock.Mock())
-    return apisession.Session
+    monkeypatch.setattr(apisession.TwitchSession, "get_streams", mock.Mock())
+    return apisession.TwitchSession
 
 
 def test_top_streams(mockedgame, mock_get_streams, apistream1):
