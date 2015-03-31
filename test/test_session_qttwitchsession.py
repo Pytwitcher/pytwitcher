@@ -89,7 +89,7 @@ def pytest_generate_tests(metafunc):
                  'apichannel1',
                  assertsinglechannel))
     args.append(('get_stream',
-                 {'name': 'somestream'},
+                 {'channel': 'somechannel'},
                  'apistream1',
                  assertsinglestream))
     args.append(('get_user',
