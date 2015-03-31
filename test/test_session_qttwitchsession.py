@@ -69,6 +69,8 @@ def pytest_generate_tests(metafunc):
     # 2. with the given args
     # 3. whether it returns qtmodels that resemble the given fixture
     # 4. and check it with the given function
+
+    # test that lists are returned with the new models
     args.append(('search_games', {'query': 'THC', 'live': False},
                  'apigames', assertlistgame))
     args.append(('top_games', {'limit': 20, 'offset': 100},
@@ -83,6 +85,7 @@ def pytest_generate_tests(metafunc):
                  'apistreams', assertliststream))
     args.append(('search_channels', {'query': 'Haha', 'limit': 12, 'offset': 2},
                  'apichannels', assertlistchannel))
+    # test get methods which return a single instance/None
     args.append(('get_game', {'name': 'somegame'},
                  'apigame1', assertsinglegame))
     args.append(('get_channel', {'name': 'somechannel'},
@@ -91,6 +94,7 @@ def pytest_generate_tests(metafunc):
                  'apistream1', assertsinglestream))
     args.append(('get_user', {'name': 'someuser'},
                  'apiuser1', assertsingleuser))
+    # test that if None is returned, the wrapper can handle it
     args.append(('get_game', {'name': 'somegame'},
                  'none', assertnone))
     args.append(('get_channel', {'name': 'somechannel'},
