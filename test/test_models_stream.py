@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import mock
 from PySide import QtGui
 
 from test import conftest
@@ -47,3 +48,17 @@ def test_get_preview(size, pixmap, mockedstream, qtbot):
 def test_from_stream(apistream1, apichannel1, qtbot):
     s = models.QtStream.from_stream(None, None, apistream1)
     conftest.assert_stream_eq_apistream(s, apistream1)
+
+
+def test_quality_options(mockedstream):
+    s = mockedstream.session
+    s.get_quality_options = mock.Mock()
+    options = ['high', 'medium', 'low']
+    s.get_quality_options.return_value = options
+    o = mockedstream.quality_options
+    assert o == options
+    s.get_quality_options.assert_called_only_once_with(mockedstream.channel)
+    # test caching
+    o2 = mockedstream.quality_options
+    assert o2 == options == o
+    assert s.get_quality_options.call_count == 1

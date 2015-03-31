@@ -302,6 +302,7 @@ class QtStream(models.Stream):
         """The session that is used for Twitch API requests"""
         self.cache = cache
         """The picture cache to use"""
+        self._quality_options = None
 
     def get_preview(self, size):
         """Get a pixmap of the box logo in the requested size
@@ -315,6 +316,28 @@ class QtStream(models.Stream):
         """
         url = self.preview[size]
         return self.cache[url]
+
+    @property
+    def quality_options(self):
+        """Return a list with available quality options
+
+        Possible values in the list:
+
+          * source
+          * high
+          * medium
+          * low
+          * mobile
+          * audio
+
+        :returns: a list with options
+        :rtype: :class:`list` of :class:`str`
+        :raises: :class:`requests.HTTPError` if channel is offline and you call it the first time
+        """
+        if self._quality_options is None:
+            qo = self.session.get_quality_options(self.channel)
+            self._quality_options = qo
+        return self._quality_options
 
 
 class QtUser(models.User):
