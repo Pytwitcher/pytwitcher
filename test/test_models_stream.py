@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 import pytest
 import mock
@@ -50,15 +51,39 @@ def test_from_stream(apistream1, apichannel1, qtbot):
     conftest.assert_stream_eq_apistream(s, apistream1)
 
 
-def test_quality_options(mockedstream):
+@pytest.fixture(scope='function')
+def mockedstreamoptions(mockedstream):
     s = mockedstream.session
     s.get_quality_options = mock.Mock()
     options = ['high', 'medium', 'low']
     s.get_quality_options.return_value = options
-    o = mockedstream.quality_options
+    return mockedstream
+
+
+def test_quality_options(mockedstreamoptions):
+    options = ['high', 'medium', 'low']
+    o = mockedstreamoptions.quality_options
     assert o == options
-    s.get_quality_options.assert_called_only_once_with(mockedstream.channel)
+    s = mockedstreamoptions.session
+    s.get_quality_options.assert_called_only_once_with(mockedstreamoptions.channel)
     # test caching
-    o2 = mockedstream.quality_options
+    o2 = mockedstreamoptions.quality_options
     assert o2 == options == o
     assert s.get_quality_options.call_count == 1
+
+
+@pytest.fixture(scope='function')
+def mockpopen(monkeypatch):
+    monkeypatch.setattr(subprocess, 'Popen', mock.Mock())
+    return subprocess.Popen
+
+
+@pytest.mark.parametrize('quali,expected', [
+    (None, 'high'),
+    ('high', 'high'),
+    ('medium', 'medium'),
+    ('small', 'small')])
+def test_play(quali, expected, mockedstreamoptions, mockpopen):
+    p = mockedstreamoptions.play(quali)
+    assert isinstance(p, mock.Mock)
+    mockpopen.assert_called_with(['livestreamer', 'twitch.tv/thc', expected])
