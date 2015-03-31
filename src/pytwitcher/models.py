@@ -4,6 +4,8 @@ They are all subclasses of the classes in :mod:`pytwitcherapi.models`.
 They automatically load pictures using the :class:`pytwitcher.cache.PixmapLoader`.
 Their intent is the usage in GUI Applications. The classes of :mod:`pytwitcherapi.models` are for none GUI Applications.
 """
+import subprocess
+
 from pytwitcherapi import models
 
 
@@ -338,6 +340,22 @@ class QtStream(models.Stream):
             qo = self.session.get_quality_options(self.channel)
             self._quality_options = qo
         return self._quality_options
+
+    def play(self, quality=None):
+        """Play the stream in the specified quality
+
+        If no quality is specified, the highest available is used.
+
+        :param quality: the quality. See :meth:`QtStream.quality_options`
+        :type quality: :class:`str`
+        :returns: the subprocess running livestreamer
+        :rtype: :class:`subprocess.POpen`
+        :raises: None
+        """
+        if quality is None:
+            quality = self.quality_options[0]
+        args = ['livestreamer', self.channel.url, quality]
+        return subprocess.Popen(args)
 
 
 class QtUser(models.User):

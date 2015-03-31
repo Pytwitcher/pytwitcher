@@ -36,7 +36,7 @@ class Tox(TestCommand):
 
 
 long_description = read('README.rst', 'HISTORY.rst')
-install_requires = ['pytwitcherapi', 'pyside']
+install_requires = ['pytwitcherapi', 'livestreamer', 'pyside']
 tests_require = ['tox']
 
 

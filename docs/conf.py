@@ -276,7 +276,8 @@ autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
                        'pyside': ('https://deptinfo-ensip.univ-poitiers.fr/ENS/pyside-docs/', None),
                        'pytwitcherapi': ('http://pytwitcherapi.readthedocs.org/en/latest/', None),
-                       'requests': ('http://docs.python-requests.org/en/latest/', None)}
+                       'requests': ('http://docs.python-requests.org/en/latest/', None),
+                       'livestreamer': ('http://docs.livestreamer.io/', None)}
 
 autosummary_generate = True
 
