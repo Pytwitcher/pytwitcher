@@ -315,3 +315,75 @@ class QtStream(models.Stream):
         """
         url = self.preview[size]
         return self.cache[url]
+
+
+class QtUser(models.User):
+    """A class for twitch.tv User.
+
+    Automatically loads pictures.
+    """
+
+    @classmethod
+    def from_user(self, session, cache, user):
+        """Create a QtUser from a :class:`pytwitcherapi.models.User`
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param name: The name of the user
+        :param user: the user to wrap
+        :type user: :class:`pytwitcherapi.models.User`
+        :returns: a QtUser
+        :rtype: :class:`pytwitcher.models.QtUser`
+        :raises: None
+        """
+        return QtUser(session, cache, user.usertype, user.name, user.logo,
+                      user.twitchid, user.displayname, user.bio)
+
+    def __init__(self, session, cache, usertype, name, logo, twitchid, displayname, bio):
+        """Initialize a new user
+
+        :param session: The session that is used for Twitch API requests
+        :type session: :class:`pytwitcher.session.QtTwitchSession`
+        :param cache: The picture cache to use
+        :type cache: :class:`pytwitcher.cache.PixmapLoader`
+        :param usertype: the user type on twitch, e.g. ``"user"``
+        :type usertype: :class:`str`
+        :param name: the username
+        :type name: :class:`str`
+        :param logo: the link to the logo
+        :type logo: :class:`str`
+        :param twitchid: the internal twitch id
+        :type twitchid: :class:`int`
+        :param displayname: the name diplayed by the interface
+        :type displayname: :class:`str`
+        :param bio: the user bio
+        :type bio: :class:`str`
+        :raises: None
+        """
+        super(QtUser, self).__init__(usertype, name, logo, twitchid, displayname, bio)
+        self.session = session
+        self.cache = cache
+        self._logo = logo
+
+    @property
+    def logo(self, ):
+        """Return the logo
+
+        :returns: the logo
+        :rtype: :class:`QtGui.QPixmap`
+        :raises: None
+        """
+        return self.cache[self._logo]
+
+    @logo.setter
+    def logo(self, url):
+        """Set the logo
+
+        :param url: the url to the logo
+        :type url: :class:`str`
+        :returns: None
+        :raises: None
+        """
+        self._logo = url

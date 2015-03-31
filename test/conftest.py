@@ -49,6 +49,14 @@ def apistream1(apichannel1):
     return stream
 
 
+@pytest.fixture(scope='function')
+def apiuser1():
+    user = apimodels.User(usertype='user', name='Michael Santana',
+                          logo='userlogo.png', twitchid=77823,
+                          displayname='Imaqtpie', bio='dongers')
+    return user
+
+
 @pytest.fixture(scope="function")
 def filledchannelcache(mockedsession, qtbot):
     c = cache.PixmapLoader(mockedsession)
@@ -117,7 +125,7 @@ def assert_user_eq_apiuser(user, apiuser):
     assert isinstance(user, models.QtUser)
     assert user.usertype == apiuser.usertype
     assert user.name == apiuser.name
-    assert user.logo == apiuser.logo
+    assert user._logo == apiuser.logo
     assert user.twitchid == apiuser.twitchid
     assert user.displayname == apiuser.displayname
     assert user.bio == apiuser.bio
