@@ -16,7 +16,7 @@ def testsmiley(qtbot):
 
 
 @pytest.fixture(scope='function')
-def mock_session(monkeypatch):
+def mock_session():
     """Return a session with request method mocked"""
     s = requests.Session()
     s.request = mock.Mock()
@@ -61,3 +61,13 @@ def test_get_item(mock_pixsession, testsmiley, qtbot):
     p2 = pl[url]
     assert p2.toImage() == testsmiley.toImage()
     mock_pixsession.request.assert_called_once_with('GET', url, allow_redirects=True)
+
+
+def test_get_empty_item(mock_pixsession, qtbot):
+    pl = cache.PixmapLoader(mock_pixsession)
+    # empty pixmap
+    # bool(p) is False
+    p = QtGui.QPixmap()
+    pl['test'] = p
+    p2 = pl['test']
+    assert p is p2
