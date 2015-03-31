@@ -285,3 +285,35 @@ autosummary_generate = True
 jinjaapi_srcdir = os.path.abspath(os.path.join(thisdir, '..', 'src'))
 jinjaapi_outputdir = os.path.abspath(os.path.join(thisdir, 'reference'))
 jinjaapi_nodelete = False
+
+
+class Mock(object):
+    """Mock modules.
+    """
+
+    @classmethod
+    def mock_modules(cls, *modules):
+        for module in modules:
+            sys.modules[module] = cls()
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return self.__class__()
+
+    def __getattr__(self, attribute):
+        if attribute in ('__file__', '__path__'):
+            return os.devnull
+        else:
+            # return the *class* object here.  Mocked attributes may be used as
+            # base class in pyudev code, thus the returned mock object must
+            # behave as class, or else Sphinx autodoc will fail to recognize
+            # the mocked base class as such, and "autoclass" will become
+            # meaningless
+            return self.__class__
+
+
+# mock out native modules used throughout pyudev to enable Sphinx autodoc even
+# if these modules are unavailable, as on readthedocs.org
+Mock.mock_modules('PySide', 'PySide.QtCore', 'PySide.QtGui',)

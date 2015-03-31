@@ -1,3 +1,5 @@
 sphinx
 jinjaapidoc
--e .
+pytwitcherapi
+-e . --no-dependencies
+
