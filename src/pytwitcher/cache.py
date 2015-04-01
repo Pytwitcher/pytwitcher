@@ -138,8 +138,10 @@ class DataRefresher(QtCore.QObject):
         :raises: :class:`ValueError` if the name is already an attribute or
                  cannot be used as attribute name.
         """
-        if name in self.__dict__:
-            raise ValueError('Cannot add attribute %s because the datarefresher already has this attribute.' % name)
+        d = dir(self)
+        if name in d or 'refresh_%s' % name in d:
+            raise ValueError("Cannot add attribute %s or 'refresh_%s', because there is already an attribute with this name." %
+                             (name, name))
         raise NotImplementedError
 
     def refresh_all(self, ):
