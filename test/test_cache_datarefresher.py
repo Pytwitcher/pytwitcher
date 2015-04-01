@@ -53,9 +53,15 @@ def test_add_refresher(name, qtbot):
             yield r
     df.add_refresher(name, update)
     assert getattr(df, name) is None
-    with qtbot.waitSignal(getattr(df, 'refresh_%s_ended' % name), timeout=100) as endblocker:
-        with qtbot.waitSignal((df, 'refresh_%s_started' % name), timeout=100) as startblocker:
+    with qtbot.waitSignal(df.refresh_ended, timeout=100) as endblocker:
+        with qtbot.waitSignal(df.refresh_started, timeout=100) as startblocker:
             getattr(df, 'refresh_%s' % name)()
     assert startblocker.signal_triggered, "refresh_%s_started signal not emitted" % name
     assert endblocker.signal_triggered, "refresh_%s_ended signal not emitted" % name
-    assert getattr(df, name) is 0, 'Value did not refresh'
+    assert getattr(df, name) == 0, 'Value did not refresh'
+    with qtbot.waitSignal(df.refresh_ended, timeout=100) as endblocker:
+        with qtbot.waitSignal(df.refesh_started, timeout=100) as startblocker:
+            df.refresh(name)
+    assert startblocker.signal_triggered, "refresh_%s_started signal not emitted" % name
+    assert endblocker.signal_triggered, "refresh_%s_ended signal not emitted" % name
+    assert getattr(df, name) == 1, 'Value did not refresh'

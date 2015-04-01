@@ -70,6 +70,10 @@ class DataRefresher(QtCore.QObject):
     """This signal will get emitted, before refreshing starts."""
     refresh_all_ended = QtCore.Signal()
     """This signal will get emitted, after all data is refreshed."""
+    refresh_started = QtCore.Signal(str)
+    """This signal will get emmited, before refreshing of an attribute starts."""
+    refresh_ended = QtCore.Signal(str)
+    """This signal will get emmited, after an attribute is refreshed."""
 
     def __init__(self, interval, parent=None):
         """Initialize a new datarefresher
@@ -142,7 +146,8 @@ class DataRefresher(QtCore.QObject):
         if name in d or 'refresh_%s' % name in d:
             raise ValueError("Cannot add attribute %s or 'refresh_%s', because there is already an attribute with this name." %
                              (name, name))
-        raise NotImplementedError
+        setattr(self, name, None)
+
 
     def refresh_all(self, ):
         """Refresh the whole data of the datarefresher
