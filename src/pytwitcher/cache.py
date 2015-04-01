@@ -1,4 +1,6 @@
 """This module contains classes for caching data"""
+import abc
+
 from PySide import QtGui, QtCore
 
 
@@ -56,3 +58,98 @@ class PixmapLoader(dict):
         p = QtGui.QPixmap()
         p.loadFromData(c)
         return p
+
+
+class DataRefresher(QtCore.QObject):
+    """Stores data and refreshes them in intervals
+
+    Can also refresh manually.
+    """
+
+    refresh_all_started = QtCore.Signal()
+    """This signal will get emitted, before refreshing starts."""
+    refresh_all_ended = QtCore.Signal()
+    """This signal will get emitted, after all data is refreshed."""
+
+    def __init__(self, interval, parent=None):
+        """Initialize a new datarefresher
+
+        :param interval: the refresh interval in miliseconds
+        :type interval: :class:`int`
+        :param parent: the parent qobject
+        :type parent: :class:`QtCore.QObject`
+        :raises: None
+        """
+        super(DataRefresher, self).__init__(parent)
+        self._timer = QtCore.QTimer(self)
+        self.set_interval(interval)
+        self._timer.timeout.connect(self.refresh_all)
+        self._refreshers = []
+
+    def set_interval(self, interval):
+        """Set the interval to the given one
+
+        :param interval: the interval in miliseconds
+        :type interval: :class:`int`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self._timer.setInterval(interval)
+
+    def get_interval(self):
+        """Return the interval of refreshing
+
+        :returns: The interval in miliseconds
+        :rtype: :class:`int`
+        :raises: None
+        """
+        return self._timer.interval()
+
+    def start(self, ):
+        """Start the timer
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self._timer.start()
+
+    def stop(self, ):
+        """Stop the timer
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self._timer.stop()
+
+    def add_refresher(self, name, refreshfunc):
+        """Add a new attribute with the given name, that should be refreshed with
+        the given function.
+
+        :param name: the name of the attribute
+        :type name: :class:`str`
+        :param refreshfunc: the function to update the attribute. Should accept no arguments and
+                            return a fresh value for the attribute on each call.
+        :type refreshfunc: :class:`type.FunctionType`
+        :returns: None
+        :rtype: None
+        :raises: :class:`ValueError` if the name is already an attribute or
+                 cannot be used as attribute name.
+        """
+        if name in self.__dict__:
+            raise ValueError('Cannot add attribute %s because the datarefresher already has this attribute.' % name)
+        raise NotImplementedError
+
+    def refresh_all(self, ):
+        """Refresh the whole data of the datarefresher
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.refresh_all_started.emit()
+        for refresher in self._refreshers:
+            getattr(self, 'refresh_%s' % refresher)()
+        self.refresh_all_ended.emit()
