@@ -1,5 +1,5 @@
 """This module contains classes for caching data"""
-import abc
+import types
 
 from PySide import QtGui, QtCore
 
@@ -136,7 +136,7 @@ class DataRefresher(QtCore.QObject):
         :type name: :class:`str`
         :param refreshfunc: the function to update the attribute. Should accept no arguments and
                             return a fresh value for the attribute on each call.
-        :type refreshfunc: :class:`type.FunctionType`
+        :type refreshfunc: :class:`types.FunctionType`
         :returns: None
         :rtype: None
         :raises: :class:`ValueError` if the name is already an attribute or
@@ -148,6 +148,15 @@ class DataRefresher(QtCore.QObject):
                              (name, name))
         setattr(self, name, None)
 
+        def refresh(self):
+            self.refresh_started.emit(name)
+            new = refreshfunc()
+            print new
+            setattr(self, name, new)
+            self.refresh_ended.emit(name)
+        m = types.MethodType(refresh, self)
+        setattr(self, 'refresh_%s' % name, m)
+        self._refreshers.append(m)
 
     def refresh_all(self, ):
         """Refresh the whole data of the datarefresher
@@ -158,5 +167,5 @@ class DataRefresher(QtCore.QObject):
         """
         self.refresh_all_started.emit()
         for refresher in self._refreshers:
-            getattr(self, 'refresh_%s' % refresher)()
+            refresher()
         self.refresh_all_ended.emit()
