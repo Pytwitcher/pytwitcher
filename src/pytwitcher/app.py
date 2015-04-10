@@ -29,6 +29,7 @@ class PyTwitcherApp(object):
         self.data = cache.DataRefresher(300000)
         self.data.add_refresher('top_games', self.session.top_games)
         self.data.refresh_ended.connect(self.update_menu)
+        # need https://launchpad.net/sni-qt for unity
         self.tray = QtGui.QSystemTrayIcon()
         self.tray.setContextMenu(self.mainmenu)
 
