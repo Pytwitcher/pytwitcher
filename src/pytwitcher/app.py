@@ -16,6 +16,7 @@ class PyTwitcherApp(object):
         :raises: None
         """
         super(PyTwitcherApp, self).__init__()
+        self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
         self.session = session.QtTwitchSession()
         self.menu = QtGui.QMenu("Streams")
         self.main = QtGui.QMainWindow()
@@ -23,11 +24,25 @@ class PyTwitcherApp(object):
         self.data = cache.DataRefresher(300000)
         self.data.add_refresher('top_games', self.session.top_games)
         self.data.refresh_ended.connect(self.update_menu)
-        self.data.refresh_all()
-        self.data.start()
         self.main.menuBar().setNativeMenuBar(False)
         self.main.menuBar().addMenu(self.menu)
+
+    def launch(self, gui=True):
+        """
+
+        :param gui:
+        :type gui:
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.data.refresh_all()
+        self.data.start()
         self.main.show()
+        if gui is True:
+            return self.qapp.exec_()
+        else:
+            return
 
     def update_menu(self, name):
         """
@@ -68,6 +83,5 @@ class PyTwitcherApp(object):
 
 
 if __name__ == "__main__":
-    qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
     app = PyTwitcherApp()
-    sys.exit(qapp.exec_())
+    sys.exit(app.launch(gui=True))
