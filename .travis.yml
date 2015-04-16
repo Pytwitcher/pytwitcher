@@ -20,7 +20,7 @@ before_install:
   - uname -a
   - lsb_release -a
 install:
-  - sudo apt-get install Xvfb
+  - sudo apt-get install xvfb
   - pip install tox
 script:
   - Xvfb :0 -screen 0 1600x1200x24 &
