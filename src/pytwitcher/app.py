@@ -75,7 +75,7 @@ class PyTwitcherApp(object):
             m = QtGui.QMenu(g.name, self.menu)
             self.menu.addMenu(m)
             for s in g.top_streams():
-                a = m.addAction("%s: %s" %(s.channel.name, s.channel.status))
+                a = m.addAction("%s: %s" % (s.channel.name, s.channel.status))
                 f = functools.partial(self.showstreammenu, stream=s)
                 a.triggered.connect(f)
 
