@@ -273,7 +273,7 @@ autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
 
 # -- Intersphinx Config ---------------------------------------------------
-intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
+intersphinx_mapping = {'python': ('https://docs.python.org/2.7', None),
                        'pyside': ('https://deptinfo-ensip.univ-poitiers.fr/ENS/pyside-docs/', None),
                        'pytwitcherapi': ('http://pytwitcherapi.readthedocs.org/en/latest/', None),
                        'requests': ('http://docs.python-requests.org/en/latest/', None),
@@ -312,7 +312,7 @@ class Mock(object):
             # behave as class, or else Sphinx autodoc will fail to recognize
             # the mocked base class as such, and "autoclass" will become
             # meaningless
-            return self.__class__
+            return self.__class__()
 
 
 # mock out native modules used throughout pyudev to enable Sphinx autodoc even

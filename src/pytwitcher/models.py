@@ -276,9 +276,9 @@ class QtStream(models.Stream):
         :rtype: :class:`pytwitcher.models.QtStream`
         :raises: None
         """
-        channel  = QtChannel.from_channel(session, cache, stream.channel)
+        channel = QtChannel.from_channel(session, cache, stream.channel)
         return QtStream(session, cache, stream.game, channel, stream.twitchid,
-                      stream.viewers, stream.preview)
+                        stream.viewers, stream.preview)
 
     def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
         """Initialize a new stream
