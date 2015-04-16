@@ -28,6 +28,7 @@ notifications:
 deploy:
   provider: pypi
   user: storax
+  distributions: "sdist bdist_wheel"
   password:
     secure: GPvB4YNy+M5KecQDFTPjW2d7QNSAOQ+a7Ck4sRibAn3PARiGdysczoRY7mTk36OdaUVIjWf7C0xgPfA4BK0s82yP3t9iIPlrMnSYQLRoRQ2mIwntgk/qPh4+FeOFTrlWEAllQsACFgooiUmAiMlh4vkos8mueBymB2oJWGKlWgg=
   on:
