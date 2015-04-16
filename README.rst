@@ -10,6 +10,11 @@ pytwitcher
     :target: https://pypi.python.org/pypi/pytwitcher/
     :alt: Supported Python versions
 
+.. image::  https://img.shields.io/travis/Pytwitcher/pytwitcher/master.png?style=flat
+    :target: https://travis-ci.org/Pytwitcher/pytwitcher
+    :alt: Build Status
+
+
 .. image:: https://pypip.in/status/pytwitcher/badge.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher/
     :alt: Development Status
@@ -21,6 +26,10 @@ pytwitcher
 .. image:: http://img.shields.io/pypi/dm/pytwitcher.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher
     :alt: Downloads per month
+
+.. image:: https://img.shields.io/coveralls/Pytwitcher/pytwitcher/master.png?style=flat
+    :target: https://coveralls.io/r/Pytwitcher/pytwitcher
+    :alt: Coverage
 
 .. image:: http://img.shields.io/pypi/l/pytwitcher.png?style=flat
     :target: https://pypi.python.org/pypi/pytwitcher
