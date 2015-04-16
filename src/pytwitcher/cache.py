@@ -151,7 +151,6 @@ class DataRefresher(QtCore.QObject):
         def refresh(self):
             self.refresh_started.emit(name)
             new = refreshfunc()
-            print new
             setattr(self, name, new)
             self.refresh_ended.emit(name)
         m = types.MethodType(refresh, self)
