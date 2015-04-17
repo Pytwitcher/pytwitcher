@@ -106,7 +106,15 @@ class PyTwitcherApp(object):
             self.topgamesmenu.addMenu(m)
             for s in g.top_streams():
                 a = m.addAction("%s: %s" % (s.channel.name, s.channel.status))
-                f = functools.partial(self.showstreammenu, stream=s)
+                f = functools.partial(self.showstreammenu, stream=None)
+                # save the callback function somewhere
+                # If we do not do this, it will get garbage collected
+                # connect does not create some kind of strong ref to f.
+                # we could either save f in self.somevariable
+                # or just on the action
+                # the actions are referenced through the menus, thus f stays alive
+                # if you delete the line below, you face a segfault error
+                a.actionfunc = f
                 a.triggered.connect(f)
 
     def showstreammenu(self, stream):

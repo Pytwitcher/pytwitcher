@@ -30,6 +30,17 @@ def apigame1():
 
 
 @pytest.fixture(scope='function')
+def apigame2():
+    game = apimodels.Game(name='besttest',
+                          box={'small':'megabox'},
+                          logo={'medium': 'besttestlogo'},
+                          twitchid=12342,
+                          viewers=57213,
+                          channels=57)
+    return game
+
+
+@pytest.fixture(scope='function')
 def apichannel1():
     channel = apimodels.Channel(name='test', status='good', displayname='thc',
         game='LoL', twitchid=6312, views=1234, followers=12, url='testurl',
@@ -40,12 +51,32 @@ def apichannel1():
 
 
 @pytest.fixture(scope='function')
+def apichannel2():
+    channel = apimodels.Channel(name='besttestchannel', status='cool', displayname='lol',
+        game='besttest', twitchid=6242, views=7214, followers=32, url='besttesturl',
+        language='en', broadcaster_language='de', mature=True,
+        logo='channellogo.png', banner='channelbanner.png',
+        video_banner='channelvideobanner.png', delay=30)
+    return channel
+
+
+@pytest.fixture(scope='function')
 def apistream1(apichannel1):
     preview = {'small': 'smallstreampreview.png',
                'medium': 'mediumstreampreview.png',
                'large': 'largestreampreview.png'}
     stream = apimodels.Stream(game='test', channel=apichannel1, twitchid=6312,
                               viewers=1234, preview=preview)
+    return stream
+
+
+@pytest.fixture(scope='function')
+def apistream2(apichannel2):
+    preview = {'small': 'smallstreampreview.png',
+               'medium': 'mediumstreampreview.png',
+               'large': 'largestreampreview.png'}
+    stream = apimodels.Stream(game='besttest', channel=apichannel2, twitchid=6823,
+                              viewers=4231, preview=preview)
     return stream
 
 
