@@ -83,6 +83,9 @@ def pytest_generate_tests(metafunc):
                  {'query': 'streams?', 'hls': True,
                   'limit': 11, 'offset': 23},
                  'apistreams', assertliststream))
+    args.append(('followed_streams',
+                 {'limit': 13, 'offset': 52},
+                 'apistreams', assertliststream))
     args.append(('search_channels', {'query': 'Haha', 'limit': 12, 'offset': 2},
                  'apichannels', assertlistchannel))
     # test get methods which return a single instance/None
@@ -93,6 +96,8 @@ def pytest_generate_tests(metafunc):
     args.append(('get_stream', {'channel': 'somechannel'},
                  'apistream1', assertsinglestream))
     args.append(('get_user', {'name': 'someuser'},
+                 'apiuser1', assertsingleuser))
+    args.append(('fetch_login_user', {},
                  'apiuser1', assertsingleuser))
     # test that if None is returned, the wrapper can handle it
     args.append(('get_game', {'name': 'somegame'},

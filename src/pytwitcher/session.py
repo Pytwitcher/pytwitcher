@@ -157,6 +157,24 @@ class QtTwitchSession(session.TwitchSession):
         qtstreams = [models.QtStream.from_stream(self, self.cache, s) for s in streams]
         return qtstreams
 
+    def followed_streams(self, limit=25, offset=0):
+        """Return the streams the current user follows.
+
+        Needs authorization ``user_read``.
+
+        :param limit: maximum number of results
+        :type limit: :class:`int`
+        :param offset: offset for pagination
+        :type offset::class:`int`
+        :returns: A list of streams
+        :rtype: :class:`list`of :class:`models.Stream` instances
+        :raises: :class:`exceptions.NotAuthorizedError`
+        """
+        streams = super(QtTwitchSession, self).followed_streams(limit=limit,
+                                                                offset=offset)
+        qtstreams = [models.QtStream.from_stream(self, self.cache, s) for s in streams]
+        return qtstreams
+
     def get_user(self, name):
         """Get the user for the given name
 
@@ -171,3 +189,16 @@ class QtTwitchSession(session.TwitchSession):
             return None
         qtuser = models.QtUser.from_user(self, self.cache, user)
         return qtuser
+
+    def fetch_login_user(self, ):
+        """Set and return the currently logined user
+
+        Sets :data:`QtTwitchSession.current_user`
+
+        :returns: The user instance
+        :rtype: :class:`models.QtUser`
+        :raises: :class:`NotAuthorizedError`
+        """
+        user = super(QtTwitchSession, self).fetch_login_user()
+        self.current_user = models.QtUser.from_user(self, self.cache, user)
+        return self.current_user
