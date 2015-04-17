@@ -54,9 +54,6 @@ class PyTwitcherApp(object):
         """The :class:`QtGui.QSystemTrayIcon` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.tray.setContextMenu(self.mainmenu)
 
-        self.trash = []
-
-
     def launch(self, gui=True):
         """Start app.
 
