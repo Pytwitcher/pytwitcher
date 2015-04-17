@@ -54,6 +54,9 @@ class PyTwitcherApp(object):
         """The :class:`QtGui.QSystemTrayIcon` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.tray.setContextMenu(self.mainmenu)
 
+        self.trash = []
+
+
     def launch(self, gui=True):
         """Start app.
 
@@ -72,7 +75,7 @@ class PyTwitcherApp(object):
         """
         self.data.refresh_all()
         self.data.start()
-        self.tray.setVisible(True)
+        self.tray.show()
         if gui is True:
             return self.qapp.exec_()
         else:
@@ -87,6 +90,8 @@ class PyTwitcherApp(object):
         :rtype: None
         :raises: None
         """
+        self.data.stop()
+        self.tray.hide()
         self.qapp.quit()
 
     def update_menu(self, name):
@@ -106,7 +111,7 @@ class PyTwitcherApp(object):
             self.topgamesmenu.addMenu(m)
             for s in g.top_streams():
                 a = m.addAction("%s: %s" % (s.channel.name, s.channel.status))
-                f = functools.partial(self.showstreammenu, stream=None)
+                f = functools.partial(self.showstreammenu, stream=s)
                 # save the callback function somewhere
                 # If we do not do this, it will get garbage collected
                 # connect does not create some kind of strong ref to f.
