@@ -1,5 +1,8 @@
-import sys
 import functools
+import os
+import pkg_resources
+import sys
+
 
 from PySide import QtGui
 
@@ -32,6 +35,10 @@ class PyTwitcherApp(object):
         self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
         self.qapp.setQuitOnLastWindowClosed(False)
 
+        logorelpath = os.path.join('data', 'icons', 'pytwicherlogo_64x64.png')
+        logopath = pkg_resources.resource_filename('pytwitcher', logorelpath)
+        self.logo = QtGui.QIcon(QtGui.QPixmap(logopath))
+
         self.session = session.QtTwitchSession()
         """The :class:`session.QtTwitchSession` that is used for all queries."""
 
@@ -53,6 +60,7 @@ class PyTwitcherApp(object):
         self.tray = QtGui.QSystemTrayIcon()
         """The :class:`QtGui.QSystemTrayIcon` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.tray.setContextMenu(self.mainmenu)
+        self.tray.setIcon(self.logo)
 
     def launch(self, gui=True):
         """Start app.
