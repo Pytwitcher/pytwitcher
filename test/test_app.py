@@ -49,6 +49,7 @@ def streamactions(gameactions, request):
 def test_trayicon(twitcherapp):
     assert twitcherapp.tray.isVisible(), "TrayIcon was not shown!"
     assert twitcherapp.tray.contextMenu() is twitcherapp.mainmenu, "TrayIcon has wrong menu"
+    assert twitcherapp.tray.icon(), "No Logo set!"
 
 
 def test_mainmenu(mainactions):
