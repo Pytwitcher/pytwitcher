@@ -81,7 +81,7 @@ class PyTwitcherApp(object):
     def quit_app(self, ):
         """Quit app.
 
-        Calls :meth:`QtGui.QApplication.quit`.
+        Stops data refreshing and hides the tray icon
 
         :returns: None
         :rtype: None
@@ -89,7 +89,6 @@ class PyTwitcherApp(object):
         """
         self.data.stop()
         self.tray.hide()
-        self.qapp.quit()
 
     def update_menu(self, name):
         """Update one of the menues that store data which will periodically update.
