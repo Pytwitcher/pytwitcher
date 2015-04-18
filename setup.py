@@ -50,6 +50,7 @@ setup(
     url='https://github.com/Pytwitcher/pytwitcher',
     packages=find_packages('src'),
     package_dir={'': 'src'},
+    package_data={'pytwitcherapi': ['data/*']},
     include_package_data=True,
     tests_require=tests_require,
     install_requires=install_requires,
