@@ -54,6 +54,9 @@ setup(
     include_package_data=True,
     tests_require=tests_require,
     install_requires=install_requires,
+    entry_points={
+        'console_scripts': ['pytwitcher = pytwitcher.app:exec_app'],
+        'gui_scripts': ['pytwitcher = pytwitcher.app:exec_app']},
     cmdclass={'test': Tox},
     license='BSD',
     zip_safe=False,
