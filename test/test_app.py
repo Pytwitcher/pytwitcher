@@ -25,7 +25,7 @@ def twitcherapp(request, monkeypatch, mockedsession, qtbot, apigame1, apigame2, 
         tg_meth.assert_called_with(limit=10, offset=0)
     request.addfinalizer(fin)
 
-    twitcherapp.launch(gui=False)
+    twitcherapp.launch(exec_=False)
     return twitcherapp
 
 

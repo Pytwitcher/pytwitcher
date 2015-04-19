@@ -4,7 +4,7 @@ import pkg_resources
 import sys
 
 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 
 from pytwitcher import cache, session
 
@@ -34,6 +34,7 @@ class PyTwitcherApp(object):
         super(PyTwitcherApp, self).__init__()
         self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
         self.qapp.setQuitOnLastWindowClosed(False)
+        self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
 
         logorelpath = os.path.join('data', 'icons', 'pytwicherlogo_64x64.png')
         logopath = pkg_resources.resource_filename('pytwitcher', logorelpath)
@@ -62,28 +63,35 @@ class PyTwitcherApp(object):
         self.tray.setContextMenu(self.mainmenu)
         self.tray.setIcon(self.logo)
 
-    def launch(self, gui=True):
+    def launch(self, exec_=True):
         """Start app.
 
         Make the TrayIcon visible and load the data. Start the timer, so the
         data gets periodically refreshed.
 
-        If gui=True, then this calls :meth:`QtGui.QApplication.exec_`. So it not will return until the QApplication has quit.
+        If exec_=True, then this calls :meth:`QtGui.QApplication.exec_`. So it not will return until the QApplication has quit.
         You quit the QApplication by calling :meth:`PyTwitcherApp.quit_app` or click ``Quit`` in the menu.
-        If gui=False, the QApplication is not executed/no event loop is created. So you will not see anything.
+        If exec_=False, the QApplication is not executed/no event loop is created. So you will not see anything.
 
-        :param gui: If True, call :meth:`QtGui.QApplication.exec_`
-        :type gui: :class:`bool`
+        :param exec_: If True, call :meth:`QtGui.QApplication.exec_`
+        :type exec_: :class:`bool`
         :returns: If gui True, the return value of :meth:`QtGui.QApplication.exec_`, else None.
         :rtype: None | :class:`int`
         :raises: None
         """
-        self.data.refresh_all()
-        self.data.start()
         self.tray.show()
-        if gui is True:
+        self.data.start()
+        if exec_ is True:
+            # Delay refresh all so the tray icon is shown first
+            timer = QtCore.QTimer()
+            timer.setSingleShot(True)
+            timer.setInterval(100)
+            timer.timeout.connect(self.data.refresh_all)
+            timer.start()
+            self._called_exec = exec_
             return self.qapp.exec_()
         else:
+            self.data.refresh_all()
             return
 
     def quit_app(self, ):
@@ -97,6 +105,8 @@ class PyTwitcherApp(object):
         """
         self.data.stop()
         self.tray.hide()
+        if self._called_exec:
+            self.qapp.quit()
 
     def update_menu(self, name):
         """Update one of the menues that store data which will periodically update.
@@ -146,6 +156,11 @@ class PyTwitcherApp(object):
             stream.play(quali)
 
 
-if __name__ == "__main__":
+def exec_app():
+    """Launches the app, and exits, if the app quits.
+
+    :returns: None
+    :raises: SystemExit
+    """
     app = PyTwitcherApp()
-    sys.exit(app.launch(gui=True))
+    sys.exit(app.launch(exec_=True))
