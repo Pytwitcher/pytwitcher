@@ -1,44 +1,35 @@
 """Module for the main menu that will be displayed at the top
 off the application and as a context menu of the tray icon."""
 
-from PySide import QtGui
+import sys
+
+from PySide import QtGui, QtCore
+
+if sys.version_info[0] == 2:
+    import futures
+else:
+    import concurrent.futures as futures
 
 
-class ActionMenu(QtGui.QMenu):
+class LazyMenu(QtGui.QMenu):
     """Menu which emits the menu action the first time
     it is clicked on.
     """
-    def __init__(self, *args, **kwargs):
+
+    loadingfinished = QtCore.Signal(futures.Future)
+
+    def __init__(self, app, *args, **kwargs):
         """Initialize a new ActionMenu"""
-        super(ActionMenu, self).__init__(*args, **kwargs)
+        super(LazyMenu, self).__init__(*args, **kwargs)
+        self.app = app
         self._activated = False
-        self.slots = []
 
-    def connect_action(self, slot):
-        """Connect the given slot to the action
-        which gets triggered the first time you click on the menu.
+    def add_done_callback(self, func):
+        self.loadingfinished.connect(func, type=QtCore.Qt.QueuedConnection)
 
-        :param slot: the callback to connect
-        :returns: None
-        :rtype: None
-        :raises: None
-        """
-        print "connect", slot
-        self.slots.append(slot)
-        self.menuAction().triggered.connect(slot)
-
-    def mousePressEvent(self, e):
-        """Emit :meth:`QtGui.QMenu.menuAction` triggered signal.
-
-        :param e: The event happening
-        :type e: :class:`QtGui.QMouseEvent`
-        :returns: None
-        """
-        r = super(ActionMenu, self).mousePressEvent(e)
-        if not self._activated and not self.actionAt(e.pos()):
-            self._activated = True
-            self.menuAction().triggered.emit()
-        return r
+    def submit(self, func):
+        future = self.app.pool.submit(func)
+        future.add_done_callback(self.loadingfinished.emit)
 
 
 class MainMenu(QtGui.QMenu):
@@ -90,7 +81,7 @@ class MainMenu(QtGui.QMenu):
         self.addAction(self.quitaction)
 
 
-class StreamsMenu(QtGui.QMenu):
+class StreamsMenu(LazyMenu):
     """Menu with top games which updates itself periodically
     """
 
@@ -105,34 +96,39 @@ class StreamsMenu(QtGui.QMenu):
         :type label: :class:`str`
         :raises: None
         """
-        super(StreamsMenu, self).__init__(label)
-        self.app = app
+        super(StreamsMenu, self).__init__(app, label)
         """The pytwicherapp that created this menu"""
-        self.app.data.add_refresher('top_games', self.app.session.top_games)
-        self.app.data.refresh_ended.connect(self.update_menu)
+        self.add_done_callback(self.create_submenus)
+        self.submit(self.app.session.top_games)
         self.addAction("Loading...")
 
-    def update_menu(self, refresher):
-        """Update the menu, if the refresher is "top_games"
+    def create_submenus(self, future):
+        """Create submenus
 
-        :param refresher: has to be "top_games" in order to refresh.
-        :type refresher: :class:`str`
+        :param future:
+        :type future:
         :returns: None
         :rtype: None
         :raises: None
         """
-        if refresher != "top_games":
-            return
         self.clear()
-        for game in self.app.data.top_games:
+        try:
+            topgames = future.result()
+        except Exception as e:
+            print e
+            self.addAction("Error")
+            return
+        for game in topgames:
             m = GameMenu(self.app, game, self)
             self.addMenu(m)
         print "Added games"
 
 
-class GameMenu(ActionMenu):
+class GameMenu(LazyMenu):
     """A menu for a game wich can load the top streams
     """
+
+    loadingfinished = QtCore.Signal(futures.Future)
 
     def __init__(self, app, game, parent=None):
         """Initialize a new game menu
@@ -145,28 +141,32 @@ class GameMenu(ActionMenu):
         :type parent: :class:`QtGui.QWidget`
         :raises: None
         """
-        super(GameMenu, self).__init__(game.name, parent)
-        self.app = app
+        super(GameMenu, self).__init__(app, game.name, parent)
         self.game = game
-        self.connect_action(self.load_topstreams)
+        self.add_done_callback(self.create_submenus)
+        self.submit(self.game.top_streams)
+        self.addAction("Loading...")
 
-    def load_topstreams(self, ):
-        """Load the topstreams and create submenues
+    def create_submenus(self, future):
+        """Create submenues
 
         :returns: None
         :rtype: None
         :raises: None
         """
-        self.addAction("Loading...")
-        self.app.qapp.processEvents()
-        topstreams = self.game.top_streams()
         self.clear()
+        try:
+            topstreams = future.result()
+        except Exception as e:
+            print e, self.game.name
+            self.addAction("Error")
+            return
         for stream in topstreams:
             m = StreamMenu(self.app, stream, self)
             self.addMenu(m)
 
 
-class StreamMenu(ActionMenu):
+class StreamMenu(LazyMenu):
     """A menu for a single stream which can load
     the quality options for a stream and add them as submenu.
     """
@@ -181,22 +181,27 @@ class StreamMenu(ActionMenu):
         :raises: None
         """
         label = "%s: %s" % (stream.channel.name, stream.channel.status)
-        super(StreamMenu, self).__init__(label, parent)
+        super(StreamMenu, self).__init__(app, label, parent)
         self.app = app
         self.stream = stream
-        self.connect_action(self.load_quality_options)
+        self.add_done_callback(self.load_quality_options)
+        self.submit(lambda: self.stream.quality_options)
+        self.addAction("Loading...")
 
-    def load_quality_options(self, ):
+    def load_quality_options(self, future):
         """Load the quality options an create submenues
 
         :returns: None
         :rtype: None
         :raises: None
         """
-        self.addAction("Loading...")
-        self.app.qapp.processEvents()
-        options = self.stream.quality_options
         self.clear()
+        try:
+            options = future.result()
+        except Exception as e:
+            print e, self.stream.game, self.stream.channel.name
+            self.addAction("Error")
+            return
         for option in options:
             a = QualityOptionAction(self.app, self.stream, option, self)
             self.addAction(a)

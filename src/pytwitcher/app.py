@@ -1,10 +1,15 @@
 import sys
 import webbrowser
 
-
 from PySide import QtGui, QtCore
 
 from pytwitcher import cache, menus, session, tray
+
+if sys.version_info[0] == 2:
+    import futures
+else:
+    import concurrent.futures as futures
+
 
 
 HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
@@ -36,7 +41,7 @@ class PyTwitcherApp(object):
         self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
         self.qapp.setQuitOnLastWindowClosed(False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
-
+        self.pool = futures.ThreadPoolExecutor(max_workers=12)
         self.session = session.QtTwitchSession()
         """The :class:`session.QtTwitchSession` that is used for all queries."""
         self.data = cache.DataRefresher(300000)
@@ -92,6 +97,7 @@ class PyTwitcherApp(object):
         :rtype: None
         :raises: None
         """
+        self.pool.shutdown()
         self.data.stop()
         self.tray.hide()
         if self._called_exec:

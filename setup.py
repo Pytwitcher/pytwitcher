@@ -12,6 +12,9 @@ from setuptools.command.test import test as TestCommand
 here = os.path.abspath(os.path.dirname(__file__))
 
 
+ispy2 = sys.version_info[0] == 2
+
+
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
     sep = kwargs.get('sep', '\n\n')
@@ -37,6 +40,8 @@ class Tox(TestCommand):
 
 long_description = read('README.rst', 'HISTORY.rst')
 install_requires = ['pytwitcherapi', 'livestreamer', 'pyside']
+if ispy2:
+    install_requires.append('futures')
 tests_require = ['tox']
 
 
