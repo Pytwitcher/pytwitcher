@@ -1,12 +1,13 @@
-import functools
-import os
-import pkg_resources
 import sys
+import webbrowser
 
 
 from PySide import QtGui, QtCore
 
-from pytwitcher import cache, session
+from pytwitcher import cache, menus, session, tray
+
+
+HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
 
 
 class PyTwitcherApp(object):
@@ -36,32 +37,19 @@ class PyTwitcherApp(object):
         self.qapp.setQuitOnLastWindowClosed(False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
 
-        logorelpath = os.path.join('data', 'icons', 'pytwicherlogo_64x64.png')
-        logopath = pkg_resources.resource_filename('pytwitcher', logorelpath)
-        self.logo = QtGui.QIcon(QtGui.QPixmap(logopath))
-
         self.session = session.QtTwitchSession()
         """The :class:`session.QtTwitchSession` that is used for all queries."""
-
-        self.mainmenu = QtGui.QMenu("PyTwitcher")
-        """The pytwicher main :class:`QtGui.QMenu`"""
-        self.topgamesmenu = QtGui.QMenu("Streams")
-        """The top games/top stremas :class:`QtGui.QMenu`"""
-        self.mainmenu.addMenu(self.topgamesmenu)
-
-        self.quitaction = QtGui.QAction("Quit", self.mainmenu)
-        self.quitaction.triggered.connect(self.quit_app)
-        self.mainmenu.addAction(self.quitaction)
-
         self.data = cache.DataRefresher(300000)
         """The :class:`cache.DataRefresher` that stores data, which will be periodically updated."""
-        self.data.add_refresher('top_games', self.session.top_games)
-        self.data.refresh_ended.connect(self.update_menu)
 
-        self.tray = QtGui.QSystemTrayIcon()
-        """The :class:`QtGui.QSystemTrayIcon` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
-        self.tray.setContextMenu(self.mainmenu)
-        self.tray.setIcon(self.logo)
+        self.mainmenu = menus.MainMenu(self)
+        """The pytwicher main :class:`mainmenu.MainMenu`"""
+        self.tray = tray.PytwitcherTray(self.mainmenu)
+        """The :class:`tray.PytwitcherTray` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
+        self.mwin = QtGui.QMainWindow()
+        mb = self.mwin.menuBar()
+        mb.setNativeMenuBar(False)
+        mb.addMenu(self.mainmenu)
 
     def launch(self, exec_=True):
         """Start app.
@@ -80,6 +68,7 @@ class PyTwitcherApp(object):
         :raises: None
         """
         self.tray.show()
+        self.mwin.show()
         self.data.start()
         if exec_ is True:
             # Delay refresh all so the tray icon is shown first
@@ -108,52 +97,14 @@ class PyTwitcherApp(object):
         if self._called_exec:
             self.qapp.quit()
 
-    def update_menu(self, name):
-        """Update one of the menues that store data which will periodically update.
+    def show_help(self, ):
+        """Show the help in the webbrowser
 
-        :param name: ``'top_games'`` will update the ``Streams`` menu.
-        :type name: :class:`str`
         :returns: None
         :rtype: None
         :raises: None
         """
-        if name != 'top_games':
-            return
-        self.topgamesmenu.clear()
-        for g in self.data.top_games:
-            m = QtGui.QMenu(g.name, self.topgamesmenu)
-            self.topgamesmenu.addMenu(m)
-            for s in g.top_streams():
-                a = m.addAction("%s: %s" % (s.channel.name, s.channel.status))
-                f = functools.partial(self.showstreammenu, stream=s)
-                # save the callback function somewhere
-                # If we do not do this, it will get garbage collected
-                # connect does not create some kind of strong ref to f.
-                # we could either save f in self.somevariable
-                # or just on the action
-                # the actions are referenced through the menus, thus f stays alive
-                # if you delete the line below, you face a segfault error
-                a.actionfunc = f
-                a.triggered.connect(f)
-
-    def showstreammenu(self, stream):
-        """Create a dialog that lets the user choose a quality for the stream.
-
-        If the user confirms, the stream is played.
-
-        :param stream: The stream to show
-        :type stream: :class:`pytwitcher.models.QtStream`
-        :returns: None
-        :rtype: None
-        :raises: None
-        """
-        quali, ok = QtGui.QInputDialog.getItem(None, "Choose Quality",
-                                               "Quality Options for %s" %
-                                               stream.channel.name,
-                                               stream.quality_options,
-                                               editable=False)
-        if ok:
-            stream.play(quali)
+        webbrowser.open(HELP_URL)
 
 
 def exec_app():
