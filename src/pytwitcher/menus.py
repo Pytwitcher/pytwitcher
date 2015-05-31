@@ -24,18 +24,23 @@ class LazyMenu(QtGui.QMenu):
     loadingfinished = QtCore.Signal(futures.Future)
 
     def __init__(self, app, *args, **kwargs):
-        """Initialize a new ActionMenu"""
+        """Initialize a new LazyMenu"""
         super(LazyMenu, self).__init__(*args, **kwargs)
         self.app = app
         self._activated = False
         self.reloadaction = QtGui.QAction("Reload", self)
         self.reloadaction.triggered.connect(self.start_loading)
-        self.add_done_callback(self._receive_data)
-
-    def add_done_callback(self, func):
-        self.loadingfinished.connect(func, type=QtCore.Qt.QueuedConnection)
+        self.loadingfinished.connect(
+            self._receive_data, type=QtCore.Qt.QueuedConnection)
 
     def start_loading(self,):
+        """Submit :meth:`LazyMenu.load_data` to the thread pool.
+
+        Clears the menu and adds an "Loading" action.
+
+        :returns: None
+        :raises: None
+        """
         future = self.app.pool.submit(self.load_data)
         future.add_done_callback(self.loadingfinished.emit)
         self.clear()
@@ -72,16 +77,84 @@ class LazyMenu(QtGui.QMenu):
             a.triggered.connect(self.start_loading)
         else:
             self.create_submenus(result)
+            self.addSeparator()
             self.addAction(self.reloadaction)
 
     def create_submenus(self, data):
-        """Create submenus for the data received by the lazy loading
+        """Create submenus from the data received by the lazy loading
 
         Override this function!
 
         :param data: the data returned from :meth:`LazyMenu.load_data`
         :returns: None
         :rtype: None
+        :raises: None
+        """
+        pass
+
+
+class IconLazyMenu(LazyMenu):
+    """LazyMenu which loads its icon in a seperate thread
+    """
+
+    iconloaded = QtCore.Signal(futures.Future)
+
+    def __init__(self, app, *args, **kwargs):
+        """Initialize a new IconLazyMenu
+
+        :raises: None
+        """
+        super(IconLazyMenu, self).__init__(app, *args, **kwargs)
+        self.iconloaded.connect(
+            self._receive_icon, type=QtCore.Qt.QueuedConnection)
+
+    def start_icon_loading(self,):
+        """Submit :meth:`LazyMenu.load_icon` to the thread pool.
+
+        :returns: None
+        :raises: None
+        """
+        future = self.app.pool.submit(self.load_icon)
+        future.add_done_callback(self.iconloaded.emit)
+
+    def _receive_icon(self, future):
+        """Collect the data from future, call :meth:`LazyMenu.create_icon`.
+
+        Sets the icon afterwards.
+
+        :param future: the future from :meth:`LazyMenu.start_icon_loading`
+        :type future: :class:`concurrent.futures.Future`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        try:
+            result = future.result()
+        except:
+            return
+        icon = self.create_icon(result)
+        if icon:
+            self.setIcon(icon)
+
+    def load_icon(self, ):
+        """This function gets called in another thread and should return data for
+        :meth:`LazyMenu.create_icon`.
+
+        Override this function.
+
+        :returns: data for icon
+        :raises: None
+        """
+        pass
+
+    def create_icon(self, data):
+        """Create and return icon from the data received by the lazy loading
+
+        Override this function!
+
+        :param data: the data returned from :meth:`LazyMenu.load_icon`
+        :returns: the created icon
+        :rtype: :class:`QtGui.QIcon`
         :raises: None
         """
         pass
@@ -162,10 +235,7 @@ class StreamsMenu(LazyMenu):
         :rtype: :class:`list` of :class:`pytwitcher.models.QtGame`
         :raises: None
         """
-        topgames = self.app.session.top_games()
-        for game in topgames:
-            game.cache.bytearraycache[game.logo["small"]]
-        return topgames
+        return self.app.session.top_games()
 
     def create_submenus(self, topgames):
         """Create submenus
@@ -181,7 +251,7 @@ class StreamsMenu(LazyMenu):
             self.addMenu(m)
 
 
-class GameMenu(LazyMenu):
+class GameMenu(IconLazyMenu):
     """A menu for a game wich can load the top streams
     """
 
@@ -198,8 +268,8 @@ class GameMenu(LazyMenu):
         """
         super(GameMenu, self).__init__(app, game.name, parent)
         self.game = game
-        self.setIcon(QtGui.QIcon(game.get_box("small")))
         self.start_loading()
+        self.start_icon_loading()
 
     def load_data(self, ):
         """Return the top streams of the game
@@ -223,8 +293,33 @@ class GameMenu(LazyMenu):
             m = StreamMenu(self.app, stream, self)
             self.addMenu(m)
 
+    def load_icon(self, ):
+        """This function gets called in another thread and should return data for
+        :meth:`LazyMenu.create_icon`.
 
-class StreamMenu(LazyMenu):
+        Override this function.
+
+        :returns: The bytearray for the pixmap
+        :rtype: :class:`QtCore.QByteArray`
+        :raises: None
+        """
+        url = self.game.logo["small"]
+        return self.game.cache.bytearraycache[url]
+
+    def create_icon(self, data):
+        """Create and return icon from the data received by the lazy loading
+
+        Override this function!
+
+        :param data: the data returned from :meth:`LazyMenu.load_icon`
+        :returns: the created icon
+        :rtype: :class:`QtGui.QIcon`
+        :raises: None
+        """
+        return QtGui.QIcon(self.game.get_box("small"))
+
+
+class StreamMenu(IconLazyMenu):
     """A menu for a single stream which can load
     the quality options for a stream and add them as submenu.
     """
@@ -238,11 +333,12 @@ class StreamMenu(LazyMenu):
         :type stream: :class:`pytwicher.models.QtStream`
         :raises: None
         """
-        label = "%s: %s" % (stream.channel.name, stream.channel.status)
-        super(StreamMenu, self).__init__(app, label, parent)
+        super(StreamMenu, self).__init__(app, stream.channel.name, parent)
         self.app = app
         self.stream = stream
+        self.setToolTip(stream.channel.status)
         self.start_loading()
+        self.start_icon_loading()
 
     def load_data(self, ):
         """Return the quality options for the stream
@@ -265,6 +361,33 @@ class StreamMenu(LazyMenu):
         for option in options:
             a = QualityOptionAction(self.app, self.stream, option, self)
             self.addAction(a)
+
+    def load_icon(self, ):
+        """This function gets called in another thread and should return data for
+        :meth:`LazyMenu.create_icon`.
+
+        Override this function.
+
+        :returns: The bytearray for the pixmap | None
+        :rtype: :class:`QtCore.QByteArray`
+        :raises: None
+        """
+        url = self.stream.channel._logo
+        if url:
+           return self.stream.cache.bytearraycache[url]
+
+    def create_icon(self, data):
+        """Create and return icon from the data received by the lazy loading
+
+        Override this function!
+
+        :param data: the data returned from :meth:`LazyMenu.load_icon`
+        :returns: the created icon
+        :rtype: :class:`QtGui.QIcon`
+        :raises: None
+        """
+        if data:
+            return QtGui.QIcon(self.stream.channel.logo)
 
 
 class QualityOptionAction(QtGui.QAction):

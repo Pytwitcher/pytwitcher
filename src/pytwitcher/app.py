@@ -4,12 +4,7 @@ import webbrowser
 
 from PySide import QtGui, QtCore
 
-from pytwitcher import cache, menus, session, tray, utils
-
-if sys.version_info[0] == 2:
-    import futures
-else:
-    import concurrent.futures as futures
+from pytwitcher import cache, menus, pool, session, tray, utils
 
 
 HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
@@ -45,7 +40,7 @@ class PyTwitcherApp(object):
         self.qapp.setQuitOnLastWindowClosed(False)
         self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
-        self.pool = futures.ThreadPoolExecutor()
+        self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
         self.session = session.QtTwitchSession()
         """The :class:`session.QtTwitchSession` that is used for all queries."""
         self.data = cache.DataRefresher(300000)

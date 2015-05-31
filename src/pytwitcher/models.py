@@ -196,10 +196,11 @@ class QtChannel(models.Channel):
         """Return the logo
 
         :returns: the logo
-        :rtype: :class:`QtGui.QPixmap`
+        :rtype: :class:`QtGui.QPixmap` | None
         :raises: None
         """
-        return self.cache[self._logo]
+        if self._logo:
+            return self.cache[self._logo]
 
     @logo.setter
     def logo(self, url):
