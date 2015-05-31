@@ -186,6 +186,8 @@ class MainMenu(QtGui.QMenu):
         self.quitaction = None
         """The :class:`QtGui.QAction` which triggers
         :meth:`pytwitcher.app.PyTwicherApp.quit_app`."""
+        self.loginaction = None
+        """The :class:`LoginAction` where the user can login."""
 
         self.add_submenus()
 
@@ -197,15 +199,18 @@ class MainMenu(QtGui.QMenu):
         :raises: None
         """
         self.streamsmenu = StreamsMenu(self.app)
+        self.loginaction = LoginAction(self.app, self)
         self.helpaction = QtGui.QAction("Help", self)
         self.helpaction.triggered.connect(self.app.show_help)
         self.quitaction = QtGui.QAction("Quit", self)
         self.quitaction.triggered.connect(self.app.quit_app)
 
         self.addMenu(self.streamsmenu)
-        self.addSeparator()
+        self.seperator1 = self.addSeparator()
+        self.addAction(self.loginaction)
+        self.seperator2 = self.addSeparator()
         self.addAction(self.helpaction)
-        self.addSeparator()
+        self.seperator3 = self.addSeparator()
         self.addAction(self.quitaction)
 
 
@@ -213,7 +218,7 @@ class StreamsMenu(LazyMenu):
     """Menu with top games which updates itself periodically
     """
 
-    def __init__(self, app, label="Streams"):
+    def __init__(self, app, label="Games"):
         """Initialize the streams menu
 
         Setup data refreshing.
@@ -235,7 +240,7 @@ class StreamsMenu(LazyMenu):
         :rtype: :class:`list` of :class:`pytwitcher.models.QtGame`
         :raises: None
         """
-        return self.app.session.top_games()
+        return self.app.session.top_games(limit=5)
 
     def create_submenus(self, topgames):
         """Create submenus
@@ -414,3 +419,86 @@ class QualityOptionAction(QtGui.QAction):
         :raises: None
         """
         self.stream.play(self.option)
+
+
+class LoginAction(QtGui.QAction):
+    """Login Action"""
+
+    def __init__(self, app, parent=None):
+        super(LoginAction, self).__init__("Login", parent)
+        self.app = app
+        self.triggered.connect(self.login)
+
+    def login(self, ):
+        """
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.setText("Please log in the browser. Click when finished.")
+        self.triggered.disconnect(self.login)
+        self.triggered.connect(self.shutdown)
+        self.app.session.start_login_server()
+        import webbrowser
+        url = self.app.session.get_auth_url()
+        webbrowser.open(url)
+
+    def shutdown(self, ):
+        """
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.triggered.disconnect(self.shutdown)
+        self.app.session.shutdown_login_server()
+        if self.app.session.authorized:
+            name = self.app.session.current_user.name
+            self.setText("%s" % name)
+            self.followmenu = FollowMenu(self.app, self.parent())
+            self.parent().insertMenu(
+                self.parent().seperator1, self.followmenu)
+        else:
+            self.setText("Login")
+            self.triggered.connect(self.login)
+
+
+class FollowMenu(LazyMenu):
+    """
+    """
+
+    def __init__(self, app, parent=None):
+        """
+        
+        :param app:
+        :type app:
+        :param parent:
+        :type parent:
+        :raises: None
+        """
+        super(FollowMenu, self).__init__(app, "Following", parent)
+        self.start_loading()
+
+    def load_data(self, ):
+        """Return data for submenus
+
+        :returns: The followed streams
+        :rtype: :class:`list` of :class:`pytwitcher.models.QtStream`
+        :raises: None
+        """
+        return self.app.session.followed_streams()
+
+    def create_submenus(self, followedstreams):
+        """Create submenus
+
+        :param followedstreams: the followed streams
+        :type followedstreams: :class:`list` of
+                               :class:`pytwitcher.models.QtStream`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        for stream in followedstreams:
+            m = StreamMenu(self.app, stream, self)
+            self.addMenu(m)
