@@ -14,6 +14,37 @@ class Defaultdict(collections.defaultdict):
             ret = self[key] = self.default_factory(key)
             return ret
 
+class ByteArrayLoader(Defaultdict):
+    """A dict like object that loads and stores bytearrays
+
+    Keys are urls to pictures. Values are :class:`QtCore.QByteArray`.
+    If the key is not in the dict, the picture will be downloaded, stored,
+    and returned
+    """
+
+    def __init__(self, session):
+        """Initialize a new, empty cache that uses the given session
+        for downloads.
+
+        :param session: The session used for downloads
+        :type session: :class:`requests.Session`
+        :raises: None
+        """
+        super(ByteArrayLoader, self).__init__(self.load_picture)
+        self.session = session
+
+    def load_picture(self, url):
+        """Load the picture at the given url
+
+        :param url: the url to the picture
+        :type url: :class:`str`
+        :returns: a bytearray of the picture data
+        :rtype: :class:`QtCore.QByteArray`
+        :raises: None
+        """
+        r = self.session.get(url)
+        return QtCore.QByteArray(r.content)
+
 
 class PixmapLoader(Defaultdict):
     """A dict like object that loads and stores pixmaps
@@ -32,6 +63,7 @@ class PixmapLoader(Defaultdict):
         :raises: None
         """
         super(PixmapLoader, self).__init__(self.load_picture)
+        self.bytearraycache = ByteArrayLoader(session)
         self.session = session
 
     def load_picture(self, url):
@@ -43,8 +75,7 @@ class PixmapLoader(Defaultdict):
         :rtype: :class:`QtGui.QPixmap`
         :raises: :class:`requests.HTTPError`
         """
-        r = self.session.get(url)
-        c = QtCore.QByteArray(r.content)
+        c = self.bytearraycache[url]
         p = QtGui.QPixmap()
         p.loadFromData(c)
         return p

@@ -43,8 +43,9 @@ class PyTwitcherApp(object):
         super(PyTwitcherApp, self).__init__()
         self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
         self.qapp.setQuitOnLastWindowClosed(False)
+        self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
-        self.pool = futures.ThreadPoolExecutor(max_workers=12)
+        self.pool = futures.ThreadPoolExecutor()
         self.session = session.QtTwitchSession()
         """The :class:`session.QtTwitchSession` that is used for all queries."""
         self.data = cache.DataRefresher(300000)
@@ -102,8 +103,8 @@ class PyTwitcherApp(object):
         :rtype: None
         :raises: None
         """
-        self.pool.shutdown()
         self.data.stop()
+        self.pool.shutdown()
         self.tray.hide()
         if self._called_exec:
             self.qapp.quit()

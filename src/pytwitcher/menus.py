@@ -28,6 +28,8 @@ class LazyMenu(QtGui.QMenu):
         super(LazyMenu, self).__init__(*args, **kwargs)
         self.app = app
         self._activated = False
+        self.reloadaction = QtGui.QAction("Reload", self)
+        self.reloadaction.triggered.connect(self.start_loading)
         self.add_done_callback(self._receive_data)
 
     def add_done_callback(self, func):
@@ -55,7 +57,7 @@ class LazyMenu(QtGui.QMenu):
 
         If an exception was thrown, create an error menu.
 
-        :param future: the future from :meth:`LazyMenu.submit`
+        :param future: the future from :meth:`LazyMenu.start_loading`
         :type future: :class:`concurrent.futures.Future`
         :returns: None
         :rtype: None
@@ -67,9 +69,10 @@ class LazyMenu(QtGui.QMenu):
         except:
             log.exception('Error receiving data for menu %s' % self)
             a = self.addAction('Error! Click to try again.')
-            a.triggered.connect(self.submit)
+            a.triggered.connect(self.start_loading)
         else:
             self.create_submenus(result)
+            self.addAction(self.reloadaction)
 
     def create_submenus(self, data):
         """Create submenus for the data received by the lazy loading
@@ -159,7 +162,10 @@ class StreamsMenu(LazyMenu):
         :rtype: :class:`list` of :class:`pytwitcher.models.QtGame`
         :raises: None
         """
-        return self.app.session.top_games()
+        topgames = self.app.session.top_games()
+        for game in topgames:
+            game.cache.bytearraycache[game.logo["small"]]
+        return topgames
 
     def create_submenus(self, topgames):
         """Create submenus
@@ -192,6 +198,7 @@ class GameMenu(LazyMenu):
         """
         super(GameMenu, self).__init__(app, game.name, parent)
         self.game = game
+        self.setIcon(QtGui.QIcon(game.get_box("small")))
         self.start_loading()
 
     def load_data(self, ):
