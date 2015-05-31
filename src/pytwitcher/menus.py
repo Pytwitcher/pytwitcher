@@ -28,8 +28,6 @@ class LazyMenu(QtGui.QMenu):
         super(LazyMenu, self).__init__(*args, **kwargs)
         self.app = app
         self._activated = False
-        self.reloadaction = QtGui.QAction("Reload", self)
-        self.reloadaction.triggered.connect(self.start_loading)
         self.loadingfinished.connect(
             self._receive_data, type=QtCore.Qt.QueuedConnection)
 
@@ -78,7 +76,9 @@ class LazyMenu(QtGui.QMenu):
         else:
             self.create_submenus(result)
             self.addSeparator()
-            self.addAction(self.reloadaction)
+            reloadaction = QtGui.QAction("Reload", self)
+            reloadaction.triggered.connect(self.start_loading)
+            self.addAction(reloadaction)
 
     def create_submenus(self, data):
         """Create submenus from the data received by the lazy loading
@@ -278,7 +278,7 @@ class GameMenu(IconLazyMenu):
         :rtype: :class:`list` of :class:`pytwitcher.models.QtStream`
         :raises: None
         """
-        return self.game.top_streams()
+        return self.game.top_streams(limit=10)
 
     def create_submenus(self, topstreams):
         """Create submenus
@@ -338,7 +338,7 @@ class StreamMenu(IconLazyMenu):
         self.stream = stream
         self.setToolTip(stream.channel.status)
         self.start_loading()
-        self.start_icon_loading()
+        #self.start_icon_loading()
 
     def load_data(self, ):
         """Return the quality options for the stream
