@@ -1,9 +1,10 @@
+import logging
 import sys
 import webbrowser
 
 from PySide import QtGui, QtCore
 
-from pytwitcher import cache, menus, session, tray
+from pytwitcher import cache, menus, session, tray, utils
 
 if sys.version_info[0] == 2:
     import futures
@@ -11,8 +12,10 @@ else:
     import concurrent.futures as futures
 
 
-
 HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 class PyTwitcherApp(object):
@@ -55,6 +58,8 @@ class PyTwitcherApp(object):
         mb = self.mwin.menuBar()
         mb.setNativeMenuBar(False)
         mb.addMenu(self.mainmenu)
+        logo = utils.get_logo()
+        self.mwin.setWindowIcon(logo)
 
     def launch(self, exec_=True):
         """Start app.
