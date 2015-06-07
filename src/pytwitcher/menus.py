@@ -3,6 +3,7 @@ off the application and as a context menu of the tray icon."""
 
 import logging
 import sys
+import weakref
 
 from PySide import QtGui, QtCore
 
@@ -14,7 +15,64 @@ else:
 log = logging.getLogger(__name__)
 
 
-class LazyMenu(QtGui.QMenu):
+class NoHideMenu(QtGui.QMenu):
+    """This menu can contain actions which are triggered
+     but do not close the menu.
+
+    Use :meth:`NoHideMenu.add_nohide_action` for this feature.
+
+    .. Important:: The references to the added actions are weak.
+                   So make sure to reference them somewhere else.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Initialize a new menu.
+
+        Use the usual menu arguments.
+
+        :raises: None
+        """
+        super(NoHideMenu, self).__init__(*args, **kwargs)
+        self._nohide_actions = weakref.WeakSet([])
+
+    def add_nohide_action(self, action):
+        """Menu will not get hidden if the action is triggered.
+
+        :param action: the action which should not trigger hide
+        :type action: :class:`QtGui.QAction`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self._nohide_actions.add(action)
+
+    def remove_nohide_action(self, action):
+        """Remove the given action so it will hide when triggered
+
+        :param action:the action wich should trigger hide
+        :type action: :class:`QtGui.QAction`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        try:
+            self._nohide_actions.remove(action)
+        except KeyError:
+            pass
+
+    def mouseReleaseEvent(self, e):
+        action = self.activeAction()
+        if action and action.isEnabled() and not action.menu() and action in self._nohide_actions:
+            action.setEnabled(False)
+            super(NoHideMenu, self).mouseReleaseEvent(e)
+            action.setEnabled(True)
+            action.trigger()
+        else:
+            super(NoHideMenu, self).mouseReleaseEvent(e)
+
+
+class LazyMenu(NoHideMenu):
     """Menu which emits the menu action the first time
     it is clicked on.
 
@@ -26,6 +84,7 @@ class LazyMenu(QtGui.QMenu):
     def __init__(self, app, *args, **kwargs):
         """Initialize a new LazyMenu"""
         super(LazyMenu, self).__init__(*args, **kwargs)
+        self.reloadaction = None
         self.app = app
         self._activated = False
         self.loadingfinished.connect(
@@ -67,6 +126,7 @@ class LazyMenu(QtGui.QMenu):
         :raises: None
         """
         self.clear()
+        self.reloadaction = None
         try:
             result = future.result()
         except:
@@ -76,9 +136,10 @@ class LazyMenu(QtGui.QMenu):
         else:
             self.create_submenus(result)
             self.addSeparator()
-            reloadaction = QtGui.QAction("Reload", self)
-            reloadaction.triggered.connect(self.start_loading)
-            self.addAction(reloadaction)
+            self.reloadaction = QtGui.QAction("Reload", self)
+            self.reloadaction.triggered.connect(self.start_loading)
+            self.addAction(self.reloadaction)
+            self.add_nohide_action(self.reloadaction)
 
     def create_submenus(self, data):
         """Create submenus from the data received by the lazy loading
@@ -160,7 +221,7 @@ class IconLazyMenu(LazyMenu):
         pass
 
 
-class MainMenu(QtGui.QMenu):
+class MainMenu(NoHideMenu):
     """The main menu that will be displayed at the top
     off the application and as a context menu of the tray icon"""
 
@@ -208,6 +269,7 @@ class MainMenu(QtGui.QMenu):
         self.addMenu(self.streamsmenu)
         self.seperator1 = self.addSeparator()
         self.addAction(self.loginaction)
+        self.add_nohide_action(self.loginaction)
         self.seperator2 = self.addSeparator()
         self.addAction(self.helpaction)
         self.seperator3 = self.addSeparator()
