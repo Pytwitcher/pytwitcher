@@ -343,7 +343,7 @@ class StreamMenu(IconLazyMenu):
         self.stream = stream
         self.setToolTip(stream.channel.status)
         self.start_loading()
-        #self.start_icon_loading()
+        self.start_icon_loading()
 
     def load_data(self, ):
         """Return the quality options for the stream
@@ -377,7 +377,7 @@ class StreamMenu(IconLazyMenu):
         :rtype: :class:`QtCore.QByteArray`
         :raises: None
         """
-        url = self.stream.channel._logo
+        url = self.stream.channel._smalllogo
         if url:
            return self.stream.cache.bytearraycache[url]
 
@@ -392,7 +392,7 @@ class StreamMenu(IconLazyMenu):
         :raises: None
         """
         if data:
-            return QtGui.QIcon(self.stream.channel.logo)
+            return QtGui.QIcon(self.stream.channel.smalllogo)
 
 
 class QualityOptionAction(QtGui.QAction):
@@ -470,7 +470,7 @@ class FollowMenu(LazyMenu):
 
     def __init__(self, app, parent=None):
         """
-        
+
         :param app:
         :type app:
         :param parent:
