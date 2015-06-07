@@ -184,6 +184,8 @@ class QtChannel(models.Channel):
                                         language, broadcaster_language, mature,
                                         logo, banner, video_banner, delay)
         self._logo = logo
+        self._smalllogo = logo.replace('-300x300.jpeg', '-50x50.jpeg') if logo\
+                          else None
         self._banner = banner
         self._video_banner = video_banner
         self.session = session
@@ -196,10 +198,11 @@ class QtChannel(models.Channel):
         """Return the logo
 
         :returns: the logo
-        :rtype: :class:`QtGui.QPixmap`
+        :rtype: :class:`QtGui.QPixmap` | None
         :raises: None
         """
-        return self.cache[self._logo]
+        if self._logo:
+            return self.cache[self._logo]
 
     @logo.setter
     def logo(self, url):
@@ -211,6 +214,28 @@ class QtChannel(models.Channel):
         :raises: None
         """
         self._logo = url
+
+    @property
+    def smalllogo(self, ):
+        """Return the logo
+
+        :returns: the logo
+        :rtype: :class:`QtGui.QPixmap` | None
+        :raises: None
+        """
+        if self._smalllogo:
+            return self.cache[self._smalllogo]
+
+    @smalllogo.setter
+    def smalllogo(self, url):
+        """Set the logo
+
+        :param url: the url to the logo
+        :type url: :class:`str`
+        :returns: None
+        :raises: None
+        """
+        self._smalllogo = url
 
     @property
     def banner(self, ):

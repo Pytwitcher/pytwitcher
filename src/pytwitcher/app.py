@@ -1,13 +1,16 @@
+import logging
 import sys
 import webbrowser
 
-
 from PySide import QtGui, QtCore
 
-from pytwitcher import cache, menus, session, tray
+from pytwitcher import cache, menus, pool, session, tray, utils
 
 
 HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 class PyTwitcherApp(object):
@@ -25,8 +28,6 @@ class PyTwitcherApp(object):
         because we might only run with a TrayIcon. So every Dialog you close could,
         quit the App. This prevents it.
 
-        Create a :class:`cache.DataRefresher` to refresh the top games/streams and followed streams every x min.
-
         Create a :class:`QtGui.QSystemTrayIcon` to quickly access streams.
         For the tray icon to work on Ubuntu, you might have to install the `sni-qt package <https://launchpad.net/sni-qt>`_.
 
@@ -35,12 +36,11 @@ class PyTwitcherApp(object):
         super(PyTwitcherApp, self).__init__()
         self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
         self.qapp.setQuitOnLastWindowClosed(False)
+        self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
-
+        self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
         self.session = session.QtTwitchSession()
         """The :class:`session.QtTwitchSession` that is used for all queries."""
-        self.data = cache.DataRefresher(300000)
-        """The :class:`cache.DataRefresher` that stores data, which will be periodically updated."""
 
         self.mainmenu = menus.MainMenu(self)
         """The pytwicher main :class:`mainmenu.MainMenu`"""
@@ -50,6 +50,8 @@ class PyTwitcherApp(object):
         mb = self.mwin.menuBar()
         mb.setNativeMenuBar(False)
         mb.addMenu(self.mainmenu)
+        logo = utils.get_logo()
+        self.mwin.setWindowIcon(logo)
 
     def launch(self, exec_=True):
         """Start app.
@@ -69,19 +71,9 @@ class PyTwitcherApp(object):
         """
         self.tray.show()
         self.mwin.show()
-        self.data.start()
         if exec_ is True:
-            # Delay refresh all so the tray icon is shown first
-            timer = QtCore.QTimer()
-            timer.setSingleShot(True)
-            timer.setInterval(100)
-            timer.timeout.connect(self.data.refresh_all)
-            timer.start()
             self._called_exec = exec_
             return self.qapp.exec_()
-        else:
-            self.data.refresh_all()
-            return
 
     def quit_app(self, ):
         """Quit app.
@@ -92,7 +84,7 @@ class PyTwitcherApp(object):
         :rtype: None
         :raises: None
         """
-        self.data.stop()
+        self.pool.shutdown()
         self.tray.hide()
         if self._called_exec:
             self.qapp.quit()
