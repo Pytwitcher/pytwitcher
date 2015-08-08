@@ -652,6 +652,8 @@ class LazyQtUser(QtUser, LazyLoadMixin):
     Lazily loads the logo
     """
 
+    logoLoaded = QtCore.Signal()
+
     def __init__(self, session, cache, usertype, name, logo, twitchid, displayname, bio):
         super(LazyQtUser, self).__init__(session, cache, usertype, name, logo, twitchid,
                                      displayname, bio)
