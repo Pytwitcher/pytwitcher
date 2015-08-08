@@ -595,3 +595,19 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
         loadfunc = functools.partial(self.cache.__getitem__, self._smalllogo)
         self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded)
         return
+
+    @QtChannel.banner.getter
+    def banner(self):
+        if self._banner_pix:
+            return self._banner_pix
+        loadfunc = functools.partial(self.cache.__getitem__, self._banner)
+        self.lazyload(loadfunc, '_banner_pix', self.bannerLoaded)
+        return
+
+    @QtChannel.video_banner.getter
+    def video_banner(self):
+        if self._video_banner_pix:
+            return self._video_banner_pix
+        loadfunc = functools.partial(self.cache.__getitem__, self._video_banner)
+        self.lazyload(loadfunc, '_video_banner_pix', self.videoBannerLoaded)
+        return
