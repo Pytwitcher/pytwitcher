@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 from PySide import QtCore
+from easymodel import treemodel
 
 if sys.version_info[0] == 2:
     import futures
@@ -667,3 +668,144 @@ class LazyQtUser(QtUser, LazyLoadMixin):
         loadfunc = functools.partial(self.cache.__getitem__, self._logo)
         self.lazyload(loadfunc, '_logo_pix', self.logoLoaded)
         return
+
+
+class BaseItemData(treemodel.ItemData):
+    """Item data that stores one object
+    and procedurally queries it.
+
+    Subclass the class and override the columns class attribute.
+    It should be a list of functions, which take the object and a role as
+    argument and return the data.
+    """
+    columns = []
+
+    def __init__(self, internalobj):
+        """Initialize a new base item data
+
+        :raises: None
+        """
+        super(BaseItemData, self).__init__()
+        self.internalobj = internalobj
+        """The object that is stored internally and holds the data"""
+
+    def column_count(self):
+        """Return the number of columns that can be queried for data
+
+        :returns: the number of columns
+        :rtype: :class:`int`
+        :raises: None
+        """
+        return len(self.columns)
+
+    def data(self, column, role):
+        """Return the data for the specified column and role
+
+        The column addresses one attribute of the data.
+
+        :param column: the data column
+        :type column: int
+        :param role: the data role
+        :type role: QtCore.Qt.ItemDataRole
+        :returns: data depending on the role
+        :rtype:
+        :raises: None
+        """
+        return self.columns[column](self.internalobj, role)
+
+    def internal_data(self, ):
+        """Return the object that holds the data
+
+        :returns: the internalobj attribute
+        :raises: None
+        """
+        return self.internalobj
+
+    def flags(self, column):
+        """Return the item flags for the item
+
+        Default is QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+        :param column: the column to query
+        :type column: int
+        :returns: the item flags
+        :rtype: QtCore.Qt.ItemFlags
+        :raises: None
+        """
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+
+
+class GameItemData(BaseItemData):
+    """item data which represents :class:`LazyQtGame`
+    """
+
+    def __init__(self, game):
+        """Initialize a new item data for the game
+
+        :raises: None
+        """
+        super(GameItemData, self).__init__(game)
+        self.size = 'large'
+        """The size for the logos. 'large', 'medium' or 'small'"""
+
+    def maindata(self, game, role):
+        """Return the data for the given role
+
+        Returns the name for :data:`QtCore.Qt.DisplayRole`.
+        Returns the logo for :data:`QtCore.Qt.DecorationRole`.
+
+        :param game: The game to query
+        :type game: :class:`QtGame`
+        :param role: the item data role
+        :type role: :data:`QtCore.Qt.ItemDataRole`
+        :returns: the data
+        :raises: None
+        """
+        if role == QtCore.Qt.DisplayRole:
+            return game.name
+        if role == QtCore.Qt.DecorationRole:
+            return game.get_logo(self.size)
+
+    def viewersdata(self, game, role):
+        """Return the viewer count for DisplayRole
+
+        :param game: The game to query
+        :type game: :class:`QtGame`
+        :param role: the item data role
+        :type role: :data:`QtCore.Qt.ItemDataRole`
+        :returns: the viewer count
+        :rtype: :class:`str` | None
+        :raises: None
+        """
+        if role == QtCore.Qt.DisplayRole:
+            return str(game.viewers)
+
+    def channelsdata(self, game, role):
+        """Return the channel count for DisplayRole
+
+        :param game: The game to query
+        :type game: :class:`QtGame`
+        :param role: the item data role
+        :type role: :data:`QtCore.Qt.ItemDataRole`
+        :returns: the channel count
+        :rtype: :class:`str` | None
+        :raises: None
+        """
+        if role == QtCore.Qt.DisplayRole:
+            return str(game.channels)
+
+    def boxdata(self, game, role):
+        """Return the box for DecorationRole
+
+        :param game: The game to query
+        :type game: :class:`QtGame`
+        :param role: the item data role
+        :type role: :data:`QtCore.Qt.ItemDataRole`
+        :returns: the channel count
+        :rtype: :class:`QtGui.QPixmap` | None
+        :raises: None
+        """
+        if role == QtCore.Qt.DecorationRole:
+            return game.get_box(self.size)
+
+    columns = [maindata, viewersdata, channelsdata, boxdata]
