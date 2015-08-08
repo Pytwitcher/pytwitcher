@@ -611,3 +611,57 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
         loadfunc = functools.partial(self.cache.__getitem__, self._video_banner)
         self.lazyload(loadfunc, '_video_banner_pix', self.videoBannerLoaded)
         return
+
+
+class LazyQtStream(QtStream, LazyLoadMixin):
+    """Lazy loading class for twitch.tv streams.
+
+    Lazily loads pictures and quality options.
+    """
+    previewLoaded = QtCore.Signal()
+    qualityOptionsLoaded = QtCore.Signal()
+
+    def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
+        super(LazyQtStream, self).__init__(session, cache, game, channel, twitchid,
+                                           viewers, preview)
+        self._preview = {}
+    __init__.__doc__ = QtStream.__init__.__doc__
+
+    def get_preview(self, size):
+        preview = self._preview.get(size)
+        if preview:
+            return preview
+        url = self.preview[size]
+        loadfunc = functools.partial(self.cache.__getitem__, url)
+        self.lazyload(loadfunc, '_preview', self.previewLoaded, size)
+        return
+    get_preview.__doc__ = QtStream.get_preview.__doc__
+
+    @QtStream.quality_options.getter
+    def quality_options(self):
+        if self._quality_options is not None:
+            return self._quality_options
+        loadfunc = functools.partial(self.session.get_quality_options, self.channel)
+        self.lazyload(loadfunc, '_quality_options', self.qualityOptionsLoaded)
+        return
+
+
+class LazyQtUser(QtUser, LazyLoadMixin):
+    """Lazy loading class for twitch.tv users.
+
+    Lazily loads the logo
+    """
+
+    def __init__(self, session, cache, usertype, name, logo, twitchid, displayname, bio):
+        super(LazyQtUser, self).__init__(session, cache, usertype, name, logo, twitchid,
+                                     displayname, bio)
+        self._logo_pix
+    __init__.__doc__ = QtUser.__init__.__doc__
+
+    @QtUser.logo.getter
+    def logo(self):
+        if self._logo_pix:
+            return self._logo_pix
+        loadfunc = functools.partial(self.cache.__getitem__, self._logo)
+        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded)
+        return
