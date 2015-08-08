@@ -13,12 +13,16 @@ class QtTwitchSession(session.TwitchSession):
     Uses the models of :mod:`pytwitcher.models`.
     """
 
-    def __init__(self, ):
+    def __init__(self, pool):
         """Initialize a new TwitchSession
 
+        :param pool: a executor for lazy loading
+        :type pool: :class:`futures.Executor`
         :raises: None
         """
         super(QtTwitchSession, self).__init__()
+        self.pool = pool
+        """A executor for lazy loading"""
         self.cache = cache.PixmapLoader(self)
         """The cache to use for storing images (:class:`QtGui.QPixmap`)"""
 

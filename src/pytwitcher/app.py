@@ -39,7 +39,7 @@ class PyTwitcherApp(object):
         self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
         self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
-        self.session = session.QtTwitchSession()
+        self.session = session.QtTwitchSession(self.pool)
         """The :class:`session.QtTwitchSession` that is used for all queries."""
 
         self.mainmenu = menus.MainMenu(self)
