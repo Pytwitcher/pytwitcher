@@ -39,7 +39,7 @@ class Tox(TestCommand):
 
 
 long_description = read('README.rst', 'HISTORY.rst')
-install_requires = ['pytwitcherapi', 'livestreamer', 'pyside']
+install_requires = ['pytwitcherapi', 'livestreamer', 'pyside', 'easymodel']
 if ispy2:
     install_requires.append('futures')
 tests_require = ['tox']
