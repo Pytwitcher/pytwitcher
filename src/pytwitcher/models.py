@@ -4,7 +4,16 @@ They are all subclasses of the classes in :mod:`pytwitcherapi.models`.
 They automatically load pictures using the :class:`pytwitcher.cache.PixmapLoader`.
 Their intent is the usage in GUI Applications. The classes of :mod:`pytwitcherapi.models` are for none GUI Applications.
 """
+import functools
 import subprocess
+import sys
+
+from PySide import QtCore
+
+if sys.version_info[0] == 2:
+    import futures
+else:
+    import concurrent.futures as futures
 
 from pytwitcherapi import models
 
@@ -453,3 +462,136 @@ class QtUser(models.User):
         :raises: None
         """
         self._logo = url
+
+
+class LazyLoadMixin(object):
+    """Mixin for lazyloading
+    """
+
+    def lazyload(self, loadfunc, attr, signal, key=None):
+        """Defer calling loadfunc set attr with the result and emit signal
+
+        :param loadfunc: the function to call for loading
+        :type loadfunc: :class:`function`
+        :param attr: the name of the attribute to set
+        :type attr: :class:`str`
+        :param signal: the signal to emit afterwards
+        :type signal: :class:`QtCore.Signal`
+        :param key: If key is not None, attr is considered a dict
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        cb = functools.partial(self.load_callback, attr, signal, key)
+        future = self.session.pool.submit(loadfunc)
+        future.add_done_callback(cb)
+
+    def load_callback(self, attr, signal, key, future):
+        """Set the attr to the result of the future and emit the signal
+
+        :param attr: the name of the attribute to set
+        :type attr: :class:`str`
+        :param signal: the signal to emit afterwards
+        :type signal: :class:`QtCore.Signal`
+        :param key: If key is not None, attr is considered a dict
+        :type key:
+        :param future: the future with the result
+        :type future: :class:`futures.Future`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        if key is None:
+            setattr(self, attr, future.result())
+        else:
+            d = getattr(self, attr)
+            d[key] = future.result()
+        signal.emit()
+
+
+class LazyQtGame(QtGame, LazyLoadMixin):
+    """Lazy loading class for twitch.tv Games.
+
+    Lazily loads pictures and topstreams.
+    """
+
+    boxLoaded = QtCore.Signal()
+    logoLoaded = QtCore.Signal()
+    topStreamsLoaded = QtCore.Signal()
+
+    def __init__(self, session, cache, name, box, logo, twitchid, viewers=None, channels=None):
+        super(LazyQtGame, self).__init__(session, cache, name, box, logo,
+                                         twitchid, viewers, channels)
+        self._box_pix = {}
+        self._logo_pix = {}
+    __init__.__doc__ = QtGame.__init__.__doc__
+
+    def get_box(self, size):
+        box = self._box_pix.get(size)
+        if box:
+            return box
+        url = self.box[size]
+        loadfunc = functools.partial(self.cache.__getitem__, url)
+        self.lazyload(loadfunc, '_box_pix', self.boxLoaded, size)
+        return
+    get_box.__doc__ = QtGame.get_box.__doc__
+
+    def get_logo(self, size):
+        logo = self._logo_pix.get(size)
+        if logo:
+            return logo
+        url = self.logo[size]
+        loadfunc = functools.partial(self.cache.__getitem__, url)
+        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, size)
+        return
+    get_logo.__doc__ = QtGame.get_logo.__doc__
+
+    def top_streams(self, limit=25, force_refresh=False):
+        if self._top_streams is None or force_refresh:
+            loadfunc = functools.partial(self.session.get_streams, game=self, limit=limit)
+            self.lazyload(loadfunc, '_top_streams', self.topStreamsLoaded)
+            return
+        return self._top_streams[:limit]
+    top_streams.__doc__ = QtGame.top_streams.__doc__
+
+
+class LazyQtChannel(QtChannel, LazyLoadMixin):
+    """Lazy loading class for twitch.tv Channels.
+
+    Lazily loads pictures.
+    """
+
+    logoLoaded = QtCore.Signal()
+    smalllogoLoaded = QtCore.Signal()
+    bannerLoaded = QtCore.Signal()
+    videoBannerLoaded = QtCore.Signal()
+
+    def __init__(self, session, cache, name, status, displayname, game,
+                 twitchid, views, followers, url, language,
+                 broadcaster_language, mature, logo, banner, video_banner,
+                 delay):
+        super(LazyQtChannel, self).__init__(session, cache, name, status, displayname,
+                                            game, twitchid, views, followers, url,
+                                            language, broadcaster_language, mature,
+                                            logo, banner, video_banner, delay)
+        self._logo_pix = None
+        self._smalllogo_pix = None
+        self._banner_pix = None
+        self._video_banner_pix = None
+    __init__.__doc__ = QtChannel.__init__.__doc__
+
+    @QtChannel.logo.getter
+    def logo(self):
+        if self._logo_pix:
+            return self._logo_pix
+        loadfunc = functools.partial(self.cache.__getitem__, self._logo)
+        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded)
+        return
+
+    @QtChannel.smalllogo.getter
+    def smalllogo(self):
+        if self._smalllogo_pix:
+            return self._smalllogo_pix
+        loadfunc = functools.partial(self.cache.__getitem__, self._smalllogo)
+        self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded)
+        return
