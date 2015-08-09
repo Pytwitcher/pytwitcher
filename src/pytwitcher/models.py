@@ -474,7 +474,7 @@ class LazyLoadMixin(QtCore.QObject):
 
     def __init__(self, *args, **kwargs):
         super(LazyLoadMixin, self).__init__(*args, **kwargs)
-        self.loadingFinished.connect(self.load_callback, type=QtCore.Qt.QueuedConnection)
+        self.loadingFinished.connect(self.load_callback)
 
     def dummyconvert(self, arg):
         return arg
@@ -774,7 +774,7 @@ class GameItemData(BaseItemData):
     """item data which represents :class:`LazyQtGame`
     """
 
-    def __init__(self, game, size='large'):
+    def __init__(self, game, size='small'):
         """Initialize a new item data for the game
 
         :param game: the game to represents
@@ -850,14 +850,14 @@ class GameItemData(BaseItemData):
         if role == QtCore.Qt.DecorationRole:
             return game.get_box(self.size)
 
-    columns = [maindata, viewersdata, channelsdata, boxdata]
+    columns = [maindata, viewersdata, channelsdata]
 
 
 class StreamItemData(BaseItemData):
     """item data which represents :class:`LazyQtStream`
     """
 
-    def __init__(self, stream, size='large'):
+    def __init__(self, stream, size='small'):
         """Initialize a new item data for the stream
 
         :param stream: the stream to represent
@@ -903,7 +903,7 @@ class StreamItemData(BaseItemData):
         :raises: None
         """
         if role == QtCore.Qt.DisplayRole:
-            return str(stream.channel.viewers)
+            return str(stream.viewers)
 
     columns = [maindata, viewersdata]
 
@@ -982,6 +982,7 @@ class StreamItem(TreeItem):
         """
         super(StreamItem, self).__init__(data, parent)
         self.itemdata().internalobj.qualityOptionsLoaded.connect(self.create_qualityoptions)
+        self.itemdata().internalobj.quality_options
 
     def create_qualityoptions(self, ):
         """Create Items for the quality options
