@@ -13,7 +13,7 @@ class QtTwitchSession(session.TwitchSession):
     Uses the models of :mod:`pytwitcher.models`.
     """
 
-    def __init__(self, pool):
+    def __init__(self, pool=None):
         """Initialize a new TwitchSession
 
         :param pool: a executor for lazy loading
@@ -39,7 +39,7 @@ class QtTwitchSession(session.TwitchSession):
         :raises: None
         """
         games = super(QtTwitchSession, self).search_games(query=query, live=live)
-        qtgames = [models.QtGame.from_game(self, self.cache, g) for g in games]
+        qtgames = [models.LazyQtGame.from_game(self, self.cache, g) for g in games]
         return qtgames
 
     def top_games(self, limit=10, offset=0):
@@ -54,7 +54,7 @@ class QtTwitchSession(session.TwitchSession):
         :raises: None
         """
         games = super(QtTwitchSession, self).top_games(limit=limit, offset=offset)
-        qtgames = [models.QtGame.from_game(self, self.cache, g) for g in games]
+        qtgames = [models.LazyQtGame.from_game(self, self.cache, g) for g in games]
         return qtgames
 
     def get_game(self, name):
@@ -69,7 +69,7 @@ class QtTwitchSession(session.TwitchSession):
         game = super(QtTwitchSession, self).get_game(name=name)
         if game is None:
             return None
-        qtgame = models.QtGame.from_game(self, self.cache, game)
+        qtgame = models.LazyQtGame.from_game(self, self.cache, game)
         return qtgame
 
     def get_channel(self, name):
@@ -84,7 +84,7 @@ class QtTwitchSession(session.TwitchSession):
         channel = super(QtTwitchSession, self).get_channel(name=name)
         if channel is None:
             return None
-        qtchannel = models.QtChannel.from_channel(self, self.cache, channel)
+        qtchannel = models.LazyQtChannel.from_channel(self, self.cache, channel)
         return qtchannel
 
     def search_channels(self, query, limit=25, offset=0):
@@ -101,7 +101,7 @@ class QtTwitchSession(session.TwitchSession):
         :raises: None
         """
         channels = super(QtTwitchSession, self).search_channels(query=query, limit=limit, offset=offset)
-        qtchannels = [models.QtChannel.from_channel(self, self.cache, c) for c in channels]
+        qtchannels = [models.LazyQtChannel.from_channel(self, self.cache, c) for c in channels]
         return qtchannels
 
     def get_stream(self, channel):
@@ -117,7 +117,7 @@ class QtTwitchSession(session.TwitchSession):
         stream = super(QtTwitchSession, self).get_stream(channel=channel)
         if stream is None:
             return None
-        qtstream = models.QtStream.from_stream(self, self.cache, stream)
+        qtstream = models.LazyQtStream.from_stream(self, self.cache, stream)
         return qtstream
 
     def get_streams(self, game=None, channels=None, limit=25, offset=0):
@@ -138,7 +138,7 @@ class QtTwitchSession(session.TwitchSession):
         """
         streams = super(QtTwitchSession, self).get_streams(game=game, channels=channels,
                                                            limit=limit, offset=offset)
-        qtstreams = [models.QtStream.from_stream(self, self.cache, s) for s in streams]
+        qtstreams = [models.LazyQtStream.from_stream(self, self.cache, s) for s in streams]
         return qtstreams
 
     def search_streams(self, query, hls=False, limit=25, offset=0):
@@ -158,7 +158,7 @@ class QtTwitchSession(session.TwitchSession):
         """
         streams = super(QtTwitchSession, self).search_streams(query=query, hls=hls,
                                                               limit=limit, offset=offset)
-        qtstreams = [models.QtStream.from_stream(self, self.cache, s) for s in streams]
+        qtstreams = [models.LazyQtStream.from_stream(self, self.cache, s) for s in streams]
         return qtstreams
 
     def followed_streams(self, limit=25, offset=0):
@@ -176,7 +176,7 @@ class QtTwitchSession(session.TwitchSession):
         """
         streams = super(QtTwitchSession, self).followed_streams(limit=limit,
                                                                 offset=offset)
-        qtstreams = [models.QtStream.from_stream(self, self.cache, s) for s in streams]
+        qtstreams = [models.LazyQtStream.from_stream(self, self.cache, s) for s in streams]
         return qtstreams
 
     def get_user(self, name):
@@ -191,7 +191,7 @@ class QtTwitchSession(session.TwitchSession):
         user = super(QtTwitchSession, self).get_user(name=name)
         if user is None:
             return None
-        qtuser = models.QtUser.from_user(self, self.cache, user)
+        qtuser = models.LazyQtUser.from_user(self, self.cache, user)
         return qtuser
 
     def fetch_login_user(self, ):
@@ -204,5 +204,5 @@ class QtTwitchSession(session.TwitchSession):
         :raises: :class:`NotAuthorizedError`
         """
         user = super(QtTwitchSession, self).fetch_login_user()
-        self.current_user = models.QtUser.from_user(self, self.cache, user)
+        self.current_user = models.LazyQtUser.from_user(self, self.cache, user)
         return self.current_user
