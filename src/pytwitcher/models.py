@@ -7,8 +7,9 @@ Their intent is the usage in GUI Applications. The classes of :mod:`pytwitcherap
 import functools
 import subprocess
 import sys
+import types
 
-from PySide import QtCore
+from PySide import QtCore, QtGui
 from easymodel import treemodel
 
 if sys.version_info[0] == 2:
@@ -26,7 +27,7 @@ class QtGame(models.Game):
     """
 
     @classmethod
-    def from_game(self, session, cache, game):
+    def from_game(cls, session, cache, game):
         """Create a QtGame from a :class:`pytwitcherapi.models.Game`
 
         :param session: The session that is used for Twitch API requests
@@ -40,8 +41,8 @@ class QtGame(models.Game):
         :rtype: :class:`pytwitcher.models.QtGame`
         :raises: None
         """
-        return QtGame(session, cache, game.name, game.box, game.logo,
-                      game.twitchid, game.viewers, game.channels)
+        return cls(session, cache, game.name, game.box, game.logo,
+                   game.twitchid, game.viewers, game.channels)
 
     def __init__(self, session, cache, name, box, logo, twitchid, viewers=None, channels=None):
         """Initialize a new game
@@ -126,7 +127,7 @@ class QtChannel(models.Channel):
     """
 
     @classmethod
-    def from_channel(self, session, cache, channel):
+    def from_channel(cls, session, cache, channel):
         """Create a QtChannel from a :class:`pytwitcherapi.models.Channel`
 
         :param session: The session that is used for Twitch API requests
@@ -140,12 +141,12 @@ class QtChannel(models.Channel):
         :rtype: :class:`pytwitcher.models.QtChannel`
         :raises: None
         """
-        return QtChannel(session, cache, channel.name, channel.status,
-                         channel.displayname, channel.game, channel.twitchid,
-                         channel.views, channel.followers, channel.url,
-                         channel.language, channel.broadcaster_language,
-                         channel.mature, channel.logo, channel.banner,
-                         channel.video_banner, channel.delay)
+        return cls(session, cache, channel.name, channel.status,
+                   channel.displayname, channel.game, channel.twitchid,
+                   channel.views, channel.followers, channel.url,
+                   channel.language, channel.broadcaster_language,
+                   channel.mature, channel.logo, channel.banner,
+                   channel.video_banner, channel.delay)
 
     def __init__(self, session, cache, name, status, displayname, game,
                  twitchid, views, followers, url, language,
@@ -297,7 +298,7 @@ class QtStream(models.Stream):
     """
 
     @classmethod
-    def from_stream(self, session, cache, stream):
+    def from_stream(cls, session, cache, stream):
         """Create a QtStream from a :class:`pytwitcherapi.models.Stream`
 
         :param session: The session that is used for Twitch API requests
@@ -312,8 +313,8 @@ class QtStream(models.Stream):
         :raises: None
         """
         channel = QtChannel.from_channel(session, cache, stream.channel)
-        return QtStream(session, cache, stream.game, channel, stream.twitchid,
-                        stream.viewers, stream.preview)
+        return cls(session, cache, stream.game, channel, stream.twitchid,
+                   stream.viewers, stream.preview)
 
     def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
         """Initialize a new stream
@@ -400,7 +401,7 @@ class QtUser(models.User):
     """
 
     @classmethod
-    def from_user(self, session, cache, user):
+    def from_user(cls, session, cache, user):
         """Create a QtUser from a :class:`pytwitcherapi.models.User`
 
         :param session: The session that is used for Twitch API requests
@@ -414,8 +415,8 @@ class QtUser(models.User):
         :rtype: :class:`pytwitcher.models.QtUser`
         :raises: None
         """
-        return QtUser(session, cache, user.usertype, user.name, user.logo,
-                      user.twitchid, user.displayname, user.bio)
+        return cls(session, cache, user.usertype, user.name, user.logo,
+                   user.twitchid, user.displayname, user.bio)
 
     def __init__(self, session, cache, usertype, name, logo, twitchid, displayname, bio):
         """Initialize a new user
@@ -465,17 +466,20 @@ class QtUser(models.User):
         self._logo = url
 
 
-class LazyLoadMixin(object):
+class LazyLoadMixin(QtCore.QObject):
     """Mixin for lazyloading
     """
 
-    loadingFinished = QtCore.Signal(str, QtCore.Signal, str, futures.Future)
+    loadingFinished = QtCore.Signal(str, QtCore.Signal, types.MethodType, str, futures.Future)
 
     def __init__(self, *args, **kwargs):
         super(LazyLoadMixin, self).__init__(*args, **kwargs)
         self.loadingFinished.connect(self.load_callback, type=QtCore.Qt.QueuedConnection)
 
-    def lazyload(self, loadfunc, attr, signal, key=''):
+    def dummyconvert(self, arg):
+        return arg
+
+    def lazyload(self, loadfunc, attr, signal, convertfunc=None, key=''):
         """Defer calling loadfunc set attr with the result and emit signal
 
         :param loadfunc: the function to call for loading
@@ -489,11 +493,13 @@ class LazyLoadMixin(object):
         :rtype: None
         :raises: None
         """
-        cb = functools.partial(self.loadingFinished.emit, attr, signal, key)
+        if convertfunc is None:
+            convertfunc = self.dummyconvert
+        cb = functools.partial(self.loadingFinished.emit, attr, signal, convertfunc, key)
         future = self.session.pool.submit(loadfunc)
         future.add_done_callback(cb)
 
-    def load_callback(self, attr, signal, key, future):
+    def load_callback(self, attr, signal, convertfunc, key, future):
         """Set the attr to the result of the future and emit the signal
 
         :param attr: the name of the attribute to set
@@ -508,12 +514,28 @@ class LazyLoadMixin(object):
         :rtype: None
         :raises: None
         """
+        result = future.result()
+        if convertfunc:
+            result = convertfunc(result)
         if not key:
-            setattr(self, attr, future.result())
+            setattr(self, attr, result)
         else:
             d = getattr(self, attr)
-            d[key] = future.result()
+            d[key] = result
         signal.emit()
+
+    def convert_to_pixmap(self, ba):
+        """Convert the bytearray to a pixmap
+
+        :param ba: the bytearray
+        :type ba: :class:`QtCore.QByteArray`
+        :returns: a pixmap
+        :rtype: :class:`QtGui.QPixmap`
+        :raises: None
+        """
+        p = QtGui.QPixmap()
+        p.loadFromData(ba)
+        return p
 
 
 class LazyQtGame(QtGame, LazyLoadMixin):
@@ -529,6 +551,7 @@ class LazyQtGame(QtGame, LazyLoadMixin):
     def __init__(self, session, cache, name, box, logo, twitchid, viewers=None, channels=None):
         super(LazyQtGame, self).__init__(session, cache, name, box, logo,
                                          twitchid, viewers, channels)
+        LazyLoadMixin.__init__(self)
         self._box_pix = {}
         self._logo_pix = {}
     __init__.__doc__ = QtGame.__init__.__doc__
@@ -538,8 +561,8 @@ class LazyQtGame(QtGame, LazyLoadMixin):
         if box:
             return box
         url = self.box[size]
-        loadfunc = functools.partial(self.cache.__getitem__, url)
-        self.lazyload(loadfunc, '_box_pix', self.boxLoaded, size)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
+        self.lazyload(loadfunc, '_box_pix', self.boxLoaded, self.convert_to_pixmap, size)
         return
     get_box.__doc__ = QtGame.get_box.__doc__
 
@@ -548,8 +571,8 @@ class LazyQtGame(QtGame, LazyLoadMixin):
         if logo:
             return logo
         url = self.logo[size]
-        loadfunc = functools.partial(self.cache.__getitem__, url)
-        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, size)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
+        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap, size)
         return
     get_logo.__doc__ = QtGame.get_logo.__doc__
 
@@ -557,7 +580,7 @@ class LazyQtGame(QtGame, LazyLoadMixin):
         if self._top_streams is None or force_refresh:
             loadfunc = functools.partial(self.session.get_streams, game=self, limit=limit)
             self.lazyload(loadfunc, '_top_streams', self.topStreamsLoaded)
-            return
+            return []
         return self._top_streams[:limit]
     top_streams.__doc__ = QtGame.top_streams.__doc__
 
@@ -581,6 +604,7 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
                                             game, twitchid, views, followers, url,
                                             language, broadcaster_language, mature,
                                             logo, banner, video_banner, delay)
+        LazyLoadMixin.__init__(self)
         self._logo_pix = None
         self._smalllogo_pix = None
         self._banner_pix = None
@@ -591,32 +615,32 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
     def logo(self):
         if self._logo_pix:
             return self._logo_pix
-        loadfunc = functools.partial(self.cache.__getitem__, self._logo)
-        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
+        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
         return
 
     @QtChannel.smalllogo.getter
     def smalllogo(self):
         if self._smalllogo_pix:
             return self._smalllogo_pix
-        loadfunc = functools.partial(self.cache.__getitem__, self._smalllogo)
-        self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._smalllogo)
+        self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded, self.convert_to_pixmap)
         return
 
     @QtChannel.banner.getter
     def banner(self):
         if self._banner_pix:
             return self._banner_pix
-        loadfunc = functools.partial(self.cache.__getitem__, self._banner)
-        self.lazyload(loadfunc, '_banner_pix', self.bannerLoaded)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._banner)
+        self.lazyload(loadfunc, '_banner_pix', self.bannerLoaded, self.convert_to_pixmap)
         return
 
     @QtChannel.video_banner.getter
     def video_banner(self):
         if self._video_banner_pix:
             return self._video_banner_pix
-        loadfunc = functools.partial(self.cache.__getitem__, self._video_banner)
-        self.lazyload(loadfunc, '_video_banner_pix', self.videoBannerLoaded)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._video_banner)
+        self.lazyload(loadfunc, '_video_banner_pix', self.videoBannerLoaded, self.convert_to_pixmap)
         return
 
 
@@ -631,6 +655,7 @@ class LazyQtStream(QtStream, LazyLoadMixin):
     def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
         super(LazyQtStream, self).__init__(session, cache, game, channel, twitchid,
                                            viewers, preview)
+        LazyLoadMixin.__init__(self)
         self._preview = {}
     __init__.__doc__ = QtStream.__init__.__doc__
 
@@ -639,18 +664,18 @@ class LazyQtStream(QtStream, LazyLoadMixin):
         if preview:
             return preview
         url = self.preview[size]
-        loadfunc = functools.partial(self.cache.__getitem__, url)
-        self.lazyload(loadfunc, '_preview', self.previewLoaded, size)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
+        self.lazyload(loadfunc, '_preview', self.previewLoaded, self.convert_to_pixmap, size)
         return
     get_preview.__doc__ = QtStream.get_preview.__doc__
 
     @QtStream.quality_options.getter
     def quality_options(self):
-        if self._quality_options is not None:
+        if self._quality_options:
             return self._quality_options
         loadfunc = functools.partial(self.session.get_quality_options, self.channel)
         self.lazyload(loadfunc, '_quality_options', self.qualityOptionsLoaded)
-        return
+        return []
 
 
 class LazyQtUser(QtUser, LazyLoadMixin):
@@ -664,6 +689,7 @@ class LazyQtUser(QtUser, LazyLoadMixin):
     def __init__(self, session, cache, usertype, name, logo, twitchid, displayname, bio):
         super(LazyQtUser, self).__init__(session, cache, usertype, name, logo, twitchid,
                                      displayname, bio)
+        LazyLoadMixin.__init__(self)
         self._logo_pix
     __init__.__doc__ = QtUser.__init__.__doc__
 
@@ -671,15 +697,14 @@ class LazyQtUser(QtUser, LazyLoadMixin):
     def logo(self):
         if self._logo_pix:
             return self._logo_pix
-        loadfunc = functools.partial(self.cache.__getitem__, self._logo)
-        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded)
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
+        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
         return
 
 
-class BaseItemData(treemodel.ItemData):
+class BaseItemData(treemodel.ItemData, QtCore.QObject):
     """Item data that stores one object
     and procedurally queries it.
-
     Subclass the class and override the columns class attribute.
     It should be a list of functions, which take the object and a role as
     argument and return the data.
@@ -720,7 +745,7 @@ class BaseItemData(treemodel.ItemData):
         :rtype:
         :raises: None
         """
-        return self.columns[column](self.internalobj, role)
+        return self.columns[column](self, self.internalobj, role)
 
     def internal_data(self, ):
         """Return the object that holds the data
