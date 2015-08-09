@@ -494,6 +494,7 @@ class LazyLoadMixin(QtCore.QObject):
         :raises: None
         """
         if convertfunc is None:
+            # needed so pyside can wrap the object when emitting the signal
             convertfunc = self.dummyconvert
         cb = functools.partial(self.loadingFinished.emit, attr, signal, convertfunc, key)
         future = self.session.pool.submit(loadfunc)
@@ -773,13 +774,18 @@ class GameItemData(BaseItemData):
     """item data which represents :class:`LazyQtGame`
     """
 
-    def __init__(self, game):
+    def __init__(self, game, size='large'):
         """Initialize a new item data for the game
 
+        :param game: the game to represents
+        :type game: :class:`LazyQtGame`
+        :param size: the size for the preview
+        :type size: :class:`str`
         :raises: None
         """
         super(GameItemData, self).__init__(game)
-        self.size = 'large'
+
+        self.size = size
         """The size for the logos. 'large', 'medium' or 'small'"""
         self.internalobj.boxLoaded.connect(functools.partial(self.dataChanged.emit, 3))
         self.internalobj.logoLoaded.connect(functools.partial(self.dataChanged.emit, 0))
@@ -847,6 +853,61 @@ class GameItemData(BaseItemData):
     columns = [maindata, viewersdata, channelsdata, boxdata]
 
 
+class StreamItemData(BaseItemData):
+    """item data which represents :class:`LazyQtStream`
+    """
+
+    def __init__(self, stream, size='large'):
+        """Initialize a new item data for the stream
+
+        :param stream: the stream to represent
+        :type stream: :class:`LazyQtStream`
+        :param size: the size for the preview
+        :type size: :class:`str`
+        :raises: None
+        """
+        super(StreamItemData, self).__init__(stream)
+        self.size = size
+        """The size for the logos. 'large', 'medium' or 'small'"""
+        self.internalobj.previewLoaded.connect(functools.partial(self.dataChanged.emit, 0))
+
+    def maindata(self, stream, role):
+        """Return the data for the given role
+
+        Returns the name for :data:`QtCore.Qt.DisplayRole`.
+        Returns the logo for :data:`QtCore.Qt.DecorationRole`.
+
+        :param game: The game to query
+        :type game: :class:`QtGame`
+        :param role: the item data role
+        :type role: :data:`QtCore.Qt.ItemDataRole`
+        :returns: the data
+        :raises: None
+        """
+        if role == QtCore.Qt.DisplayRole:
+            return stream.channel.name
+        if role == QtCore.Qt.ToolTipRole:
+            return stream.channel.status
+        if role == QtCore.Qt.DecorationRole:
+            return stream.get_preview(self.size)
+
+    def viewersdata(self, stream, role):
+        """Return the viewer count for DisplayRole
+
+        :param game: The game to query
+        :type game: :class:`QtGame`
+        :param role: the item data role
+        :type role: :data:`QtCore.Qt.ItemDataRole`
+        :returns: the viewer count
+        :rtype: :class:`str` | None
+        :raises: None
+        """
+        if role == QtCore.Qt.DisplayRole:
+            return str(stream.channel.viewers)
+
+    columns = [maindata, viewersdata]
+
+
 class TreeItem(treemodel.TreeItem):
     """A treeitem which emits dateChanged if the itemdata emits it
     """
@@ -870,3 +931,66 @@ class TreeItem(treemodel.TreeItem):
             return
         index = self.to_index(column)
         self._model.dataChanged.emit(index, index)
+
+
+class GameItem(TreeItem):
+    """TreeItem that automatically loads streams
+    """
+
+    def __init__(self, data, parent=None, maxstreams=25):
+        """Initialize a new game item
+
+        :param data: the GameItemData
+        :type data: :class:`GameItemData`
+        :param parent: the parent item
+        :type parent: :class:`treemodel.TreeItem` | None
+        :param maxstreams: limit for topstreams
+        :type maxstreams: :class:`int`
+        :raises: None
+        """
+        super(GameItem, self).__init__(data, parent)
+        self.itemdata().internalobj.topStreamsLoaded.connect(self.create_topstreams)
+        # start loading of top_streams
+        self.itemdata().internalobj.top_streams(limit=maxstreams)
+        self.maxstreams = maxstreams
+
+    def create_topstreams(self, ):
+        """Create topstreams items from the games topstreams
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        topstreams = self.itemdata().internalobj.top_streams(limit=self.maxstreams)
+        for s in topstreams:
+            data = StreamItemData(s, self.itemdata().size)
+            StreamItem(data, self)
+
+
+class StreamItem(TreeItem):
+    """Treeitem that automatically loads the quality options
+    """
+
+    def __init__(self, data, parent=None):
+        """Initialize a new stream item
+
+        :param data: the StreamItemData
+        :type data: :class:`StreamItemData`
+        :param parent: the parent item
+        :type parent: :class:`treemodel.TreeItem` | None
+        :raises: None
+        """
+        super(StreamItem, self).__init__(data, parent)
+        self.itemdata().internalobj.qualityOptionsLoaded.connect(self.create_qualityoptions)
+
+    def create_qualityoptions(self, ):
+        """Create Items for the quality options
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        qo = self.itemdata().internalobj.quality_options
+        for o in qo:
+            data = treemodel.ListItemData([o])
+            treemodel.TreeItem(data, self)
