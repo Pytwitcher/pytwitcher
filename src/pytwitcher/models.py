@@ -685,6 +685,9 @@ class BaseItemData(treemodel.ItemData):
     argument and return the data.
     """
     columns = []
+    dataChanged = QtCore.Signal(int)
+    """Signal gets emitted when the data changed
+    in the specified column"""
 
     def __init__(self, internalobj):
         """Initialize a new base item data
@@ -753,6 +756,8 @@ class GameItemData(BaseItemData):
         super(GameItemData, self).__init__(game)
         self.size = 'large'
         """The size for the logos. 'large', 'medium' or 'small'"""
+        self.internalobj.boxLoaded.connect(functools.partial(self.dataChanged.emit, 3))
+        self.internalobj.logoLoaded.connect(functools.partial(self.dataChanged.emit, 0))
 
     def maindata(self, game, role):
         """Return the data for the given role
@@ -815,3 +820,28 @@ class GameItemData(BaseItemData):
             return game.get_box(self.size)
 
     columns = [maindata, viewersdata, channelsdata, boxdata]
+
+
+class TreeItem(treemodel.TreeItem):
+    """A treeitem which emits dateChanged if the itemdata emits it
+    """
+
+    def __init__(self, data, parent=None):
+        super(TreeItem, self).__init__(data, parent)
+        if isinstance(data, BaseItemData):
+            data.dataChanged.connect(self.data_changed_cb)
+    __init__.__doc__ = treemodel.TreeItem.__init__.__doc__
+
+    def data_changed_cb(self, column):
+        """Emit dataChanged for the index that represents the column
+
+        :param column: the column that changed
+        :type column: :class:`int`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        if not self._model:
+            return
+        index = self.to_index(column)
+        self._model.dataChanged.emit(index, index)
