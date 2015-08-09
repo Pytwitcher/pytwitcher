@@ -469,7 +469,13 @@ class LazyLoadMixin(object):
     """Mixin for lazyloading
     """
 
-    def lazyload(self, loadfunc, attr, signal, key=None):
+    loadingFinished = QtCore.Signal(str, QtCore.Signal, str, futures.Future)
+
+    def __init__(self, *args, **kwargs):
+        super(LazyLoadMixin, self).__init__(*args, **kwargs)
+        self.loadingFinished.connect(self.load_callback, type=QtCore.Qt.QueuedConnection)
+
+    def lazyload(self, loadfunc, attr, signal, key=''):
         """Defer calling loadfunc set attr with the result and emit signal
 
         :param loadfunc: the function to call for loading
@@ -483,7 +489,7 @@ class LazyLoadMixin(object):
         :rtype: None
         :raises: None
         """
-        cb = functools.partial(self.load_callback, attr, signal, key)
+        cb = functools.partial(self.loadingFinished.emit, attr, signal, key)
         future = self.session.pool.submit(loadfunc)
         future.add_done_callback(cb)
 
@@ -502,7 +508,7 @@ class LazyLoadMixin(object):
         :rtype: None
         :raises: None
         """
-        if key is None:
+        if not key:
             setattr(self, attr, future.result())
         else:
             d = getattr(self, attr)
