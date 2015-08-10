@@ -794,7 +794,7 @@ class BaseItemData(treemodel.ItemData, QtCore.QObject):
         :rtype: QtCore.Qt.ItemFlags
         :raises: None
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
 
 class GameItemData(BaseItemData):
@@ -821,7 +821,7 @@ class GameItemData(BaseItemData):
         """Return the data for the given role
 
         Returns the name for :data:`QtCore.Qt.DisplayRole`.
-        Returns the logo for :data:`QtCore.Qt.DecorationRole`.
+        Returns the box for :data:`QtCore.Qt.DecorationRole`.
 
         :param game: The game to query
         :type game: :class:`QtGame`
@@ -833,7 +833,7 @@ class GameItemData(BaseItemData):
         if role == QtCore.Qt.DisplayRole:
             return game.name
         if role == QtCore.Qt.DecorationRole:
-            return game.get_logo(self.size)
+            return game.get_box(self.size)
 
     def viewersdata(self, game, role):
         """Return the viewer count for DisplayRole
@@ -863,21 +863,21 @@ class GameItemData(BaseItemData):
         if role == QtCore.Qt.DisplayRole:
             return str(game.channels)
 
-    def boxdata(self, game, role):
-        """Return the box for DecorationRole
+    def logodata(self, game, role):
+        """Return the logo for DecorationRole
 
         :param game: The game to query
         :type game: :class:`QtGame`
         :param role: the item data role
         :type role: :data:`QtCore.Qt.ItemDataRole`
-        :returns: the channel count
+        :returns: the logo
         :rtype: :class:`QtGui.QPixmap` | None
         :raises: None
         """
         if role == QtCore.Qt.DecorationRole:
             return game.get_box(self.size)
 
-    columns = [maindata, viewersdata, channelsdata]
+    columns = [maindata, viewersdata, channelsdata, logodata]
 
 
 class StreamItemData(BaseItemData):
