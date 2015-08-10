@@ -814,8 +814,8 @@ class GameItemData(BaseItemData):
 
         self.size = size
         """The size for the logos. 'large', 'medium' or 'small'"""
-        self.internalobj.boxLoaded.connect(functools.partial(self.dataChanged.emit, 3))
-        self.internalobj.logoLoaded.connect(functools.partial(self.dataChanged.emit, 0))
+        self.internalobj.boxLoaded.connect(functools.partial(self.dataChanged.emit, 0))
+        self.internalobj.logoLoaded.connect(functools.partial(self.dataChanged.emit, 3))
 
     def maindata(self, game, role):
         """Return the data for the given role
@@ -875,7 +875,7 @@ class GameItemData(BaseItemData):
         :raises: None
         """
         if role == QtCore.Qt.DecorationRole:
-            return game.get_box(self.size)
+            return game.get_logo(self.size)
 
     columns = [maindata, viewersdata, channelsdata, logodata]
 
