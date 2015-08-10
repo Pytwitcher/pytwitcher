@@ -471,6 +471,7 @@ class LazyLoadMixin(QtCore.QObject):
     """
 
     loadingFinished = QtCore.Signal(str, QtCore.Signal, types.MethodType, str, futures.Future)
+    LOADING = 'LOADING'
 
     def __init__(self, *args, **kwargs):
         super(LazyLoadMixin, self).__init__(*args, **kwargs)
@@ -559,8 +560,11 @@ class LazyQtGame(QtGame, LazyLoadMixin):
 
     def get_box(self, size):
         box = self._box_pix.get(size)
+        if box is self.LOADING:
+            return
         if box:
             return box
+        self._box_pix[size] = self.LOADING
         url = self.box[size]
         loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
         self.lazyload(loadfunc, '_box_pix', self.boxLoaded, self.convert_to_pixmap, size)
@@ -569,8 +573,11 @@ class LazyQtGame(QtGame, LazyLoadMixin):
 
     def get_logo(self, size):
         logo = self._logo_pix.get(size)
+        if logo is self.LOADING:
+            return
         if logo:
             return logo
+        self._logo_pix[size] = self.LOADING
         url = self.logo[size]
         loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
         self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap, size)
@@ -578,7 +585,10 @@ class LazyQtGame(QtGame, LazyLoadMixin):
     get_logo.__doc__ = QtGame.get_logo.__doc__
 
     def top_streams(self, limit=25, force_refresh=False):
+        if self._top_streams is self.LOADING:
+            return
         if self._top_streams is None or force_refresh:
+            self._top_streams = self.LOADING
             loadfunc = functools.partial(self.session.get_streams, game=self, limit=limit)
             self.lazyload(loadfunc, '_top_streams', self.topStreamsLoaded)
             return []
@@ -614,26 +624,32 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
 
     @QtChannel.logo.getter
     def logo(self):
-        if self._logo_pix:
+        if self._logo_pix and not self.LOADING:
             return self._logo_pix
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
-        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
+        if self._logo_pix is not self.LOADING:
+            self._logo_pix = self.LOADING
+            loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
+            self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
         return
 
     @QtChannel.smalllogo.getter
     def smalllogo(self):
-        if self._smalllogo_pix:
+        if self._smalllogo_pix and not self.LOADING:
             return self._smalllogo_pix
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._smalllogo)
-        self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded, self.convert_to_pixmap)
+        if self._smalllogo_pix is not self.LOADING:
+            self._smalllogo_pix = self.LOADING
+            loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._smalllogo)
+            self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded, self.convert_to_pixmap)
         return
 
     @QtChannel.banner.getter
     def banner(self):
-        if self._banner_pix:
+        if self._banner_pix and not self.LOADING:
             return self._banner_pix
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._banner)
-        self.lazyload(loadfunc, '_banner_pix', self.bannerLoaded, self.convert_to_pixmap)
+        if self._banner_pix is not self.LOADING:
+            self._banner_pix = self.LOADING
+            loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._banner)
+            self.lazyload(loadfunc, '_banner_pix', self.bannerLoaded, self.convert_to_pixmap)
         return
 
     @QtChannel.video_banner.getter
@@ -662,8 +678,11 @@ class LazyQtStream(QtStream, LazyLoadMixin):
 
     def get_preview(self, size):
         preview = self._preview.get(size)
+        if preview is self.LOADING:
+            return
         if preview:
             return preview
+        self._preview[size] = self.LOADING
         url = self.preview[size]
         loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
         self.lazyload(loadfunc, '_preview', self.previewLoaded, self.convert_to_pixmap, size)
@@ -672,8 +691,11 @@ class LazyQtStream(QtStream, LazyLoadMixin):
 
     @QtStream.quality_options.getter
     def quality_options(self):
+        if self._quality_options is self.LOADING:
+            return
         if self._quality_options:
             return self._quality_options
+        self._quality_options = self.LOADING
         loadfunc = functools.partial(self.session.get_quality_options, self.channel)
         self.lazyload(loadfunc, '_quality_options', self.qualityOptionsLoaded)
         return []
@@ -696,8 +718,11 @@ class LazyQtUser(QtUser, LazyLoadMixin):
 
     @QtUser.logo.getter
     def logo(self):
+        if self._logo_pix is self.LOADING:
+            return
         if self._logo_pix:
             return self._logo_pix
+        self._logo_pix = self.LOADING
         loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
         self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
         return
