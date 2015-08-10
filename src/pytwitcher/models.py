@@ -530,7 +530,6 @@ class LazyLoadMixin(QtCore.QObject):
         cb = functools.partial(self.loadingFinished.emit, self, attr, signal, convertfunc, key)
         future = self.session.pool.submit(loadfunc)
         future.add_done_callback(cb)
-        print("Load:", attr)
 
     def convert_to_pixmap(self, ba):
         """Convert the bytearray to a pixmap
@@ -544,6 +543,34 @@ class LazyLoadMixin(QtCore.QObject):
         p = QtGui.QPixmap()
         p.loadFromData(ba)
         return p
+
+    def lazyload_pixmap(self, privattr, url, signal, key=None):
+        """Use the lazyload function to load the url and set it on the attribute
+
+        :param privattr: the private attr that is used to store the pixmap
+        :type privattr: :class:`str`
+        :param url: the url to load
+        :type url: :class:`str`
+        :param signal: the signal to emit after the loading is complete
+        :type signal: :class:`QtCore.Signal`
+        :param key: If the key is not None, consider the attribute as a dict
+        :returns: None if loading hasn't finished or the pixmap
+        :rtype: :class:`QtGui.QPixmap` | None
+        :raises: None
+        """
+        value = getattr(self, privattr)
+        if key is not None:
+            value = value.get(key)
+        if value is self.LOADING:
+            return
+        if value:
+            return value
+        if key is None:
+            setattr(self, privattr, self.LOADING)
+        else:
+            getattr(self, privattr)[key] = self.LOADING
+        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
+        self.lazyload(loadfunc, privattr, signal, self.convert_to_pixmap, key)
 
 
 class LazyQtGame(QtGame, LazyLoadMixin):
@@ -565,29 +592,11 @@ class LazyQtGame(QtGame, LazyLoadMixin):
     __init__.__doc__ = QtGame.__init__.__doc__
 
     def get_box(self, size):
-        box = self._box_pix.get(size)
-        if box is self.LOADING:
-            return
-        if box:
-            return box
-        self._box_pix[size] = self.LOADING
-        url = self.box[size]
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
-        self.lazyload(loadfunc, '_box_pix', self.boxLoaded, self.convert_to_pixmap, size)
-        return
+        return self.lazyload_pixmap('_box_pix', self.box[size], self.boxLoaded, size)
     get_box.__doc__ = QtGame.get_box.__doc__
 
     def get_logo(self, size):
-        logo = self._logo_pix.get(size)
-        if logo is self.LOADING:
-            return
-        if logo:
-            return logo
-        self._logo_pix[size] = self.LOADING
-        url = self.logo[size]
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
-        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap, size)
-        return
+        return self.lazyload_pixmap('_logo_pix', self.logo[size], self.logoLoaded, size)
     get_logo.__doc__ = QtGame.get_logo.__doc__
 
     def top_streams(self, limit=25, force_refresh=False):
@@ -630,41 +639,19 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
 
     @QtChannel.logo.getter
     def logo(self):
-        if self._logo_pix and not self.LOADING:
-            return self._logo_pix
-        if self._logo_pix is not self.LOADING:
-            self._logo_pix = self.LOADING
-            loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
-            self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
-        return
+        return self.lazyload_pixmap('_logo_pix', self._logo, self.logoLoaded)
 
     @QtChannel.smalllogo.getter
     def smalllogo(self):
-        if self._smalllogo_pix and not self.LOADING:
-            return self._smalllogo_pix
-        if self._smalllogo_pix is not self.LOADING:
-            self._smalllogo_pix = self.LOADING
-            loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._smalllogo)
-            self.lazyload(loadfunc, '_smalllogo_pix', self.smalllogoLoaded, self.convert_to_pixmap)
-        return
+        return self.lazyload_pixmap('_smalllogo_pix', self._smalllogo, self.smalllogoLoaded)
 
     @QtChannel.banner.getter
     def banner(self):
-        if self._banner_pix and not self.LOADING:
-            return self._banner_pix
-        if self._banner_pix is not self.LOADING:
-            self._banner_pix = self.LOADING
-            loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._banner)
-            self.lazyload(loadfunc, '_banner_pix', self.bannerLoaded, self.convert_to_pixmap)
-        return
+        return self.lazyload_pixmap('_banner_pix', self._banner, self.bannerLoaded)
 
     @QtChannel.video_banner.getter
     def video_banner(self):
-        if self._video_banner_pix:
-            return self._video_banner_pix
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._video_banner)
-        self.lazyload(loadfunc, '_video_banner_pix', self.videoBannerLoaded, self.convert_to_pixmap)
-        return
+        return self.lazyload_pixmap('_video_banner_pix', self._video_banner, self.videoBannerLoaded)
 
 
 class LazyQtStream(QtStream, LazyLoadMixin):
@@ -683,16 +670,7 @@ class LazyQtStream(QtStream, LazyLoadMixin):
     __init__.__doc__ = QtStream.__init__.__doc__
 
     def get_preview(self, size):
-        preview = self._preview.get(size)
-        if preview is self.LOADING:
-            return
-        if preview:
-            return preview
-        self._preview[size] = self.LOADING
-        url = self.preview[size]
-        loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
-        self.lazyload(loadfunc, '_preview', self.previewLoaded, self.convert_to_pixmap, size)
-        return
+        return self.lazyload_pixmap('_preview', self.preview[size], self.previewLoaded, size)
     get_preview.__doc__ = QtStream.get_preview.__doc__
 
     @QtStream.quality_options.getter
