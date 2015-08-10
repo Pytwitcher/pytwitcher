@@ -925,7 +925,7 @@ class StreamItemData(BaseItemData):
         if role == QtCore.Qt.ToolTipRole:
             return stream.channel.status
         if role == QtCore.Qt.DecorationRole:
-            return stream.get_preview(self.size)
+            return stream.channel.smalllogo
 
     def viewersdata(self, stream, role):
         """Return the viewer count for DisplayRole
@@ -941,12 +941,11 @@ class StreamItemData(BaseItemData):
         if role == QtCore.Qt.DisplayRole:
             return str(stream.viewers)
 
-    def channelsmalllogo(self, stream, role):
+    def previewdata(self, stream, role):
         if role == QtCore.Qt.DecorationRole:
-            logo = stream.channel.smalllogo
-            return logo
+            return stream.get_preview(self.size)
 
-    columns = [maindata, viewersdata, channelsmalllogo]
+    columns = [maindata, viewersdata, previewdata]
 
 
 class TreeItem(treemodel.TreeItem):
