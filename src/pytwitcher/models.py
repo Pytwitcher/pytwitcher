@@ -466,16 +466,46 @@ class QtUser(models.User):
         self._logo = url
 
 
+class Callbacker(object):
+
+    def load_callback(self, obj, attr, signal, convertfunc, key, future):
+        """Set the attr to the result of the future and emit the signal
+
+        :param obj: the object to set the attribute on
+        :param attr: the name of the attribute to set
+        :type attr: :class:`str`
+        :param signal: the signal to emit afterwards
+        :type signal: :class:`QtCore.Signal`
+        :param key: If key is not None, attr is considered a dict
+        :type key:
+        :param future: the future with the result
+        :type future: :class:`futures.Future`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        result = future.result()
+        if convertfunc:
+            result = convertfunc(result)
+        if not key:
+            setattr(obj, attr, result)
+        else:
+            d = getattr(obj, attr)
+            d[key] = result
+        signal.emit()
+
+
 class LazyLoadMixin(QtCore.QObject):
     """Mixin for lazyloading
     """
 
-    loadingFinished = QtCore.Signal(str, QtCore.Signal, types.MethodType, str, futures.Future)
+    callbacker = Callbacker()
+    loadingFinished = QtCore.Signal(object, str, QtCore.Signal, types.MethodType, str, futures.Future)
     LOADING = 'LOADING'
 
     def __init__(self, *args, **kwargs):
         super(LazyLoadMixin, self).__init__(*args, **kwargs)
-        self.loadingFinished.connect(self.load_callback)
+        self.loadingFinished.connect(self.callbacker.load_callback, type=QtCore.Qt.QueuedConnection)
 
     def dummyconvert(self, arg):
         return arg
@@ -497,34 +527,10 @@ class LazyLoadMixin(QtCore.QObject):
         if convertfunc is None:
             # needed so pyside can wrap the object when emitting the signal
             convertfunc = self.dummyconvert
-        cb = functools.partial(self.loadingFinished.emit, attr, signal, convertfunc, key)
+        cb = functools.partial(self.loadingFinished.emit, self, attr, signal, convertfunc, key)
         future = self.session.pool.submit(loadfunc)
         future.add_done_callback(cb)
-
-    def load_callback(self, attr, signal, convertfunc, key, future):
-        """Set the attr to the result of the future and emit the signal
-
-        :param attr: the name of the attribute to set
-        :type attr: :class:`str`
-        :param signal: the signal to emit afterwards
-        :type signal: :class:`QtCore.Signal`
-        :param key: If key is not None, attr is considered a dict
-        :type key:
-        :param future: the future with the result
-        :type future: :class:`futures.Future`
-        :returns: None
-        :rtype: None
-        :raises: None
-        """
-        result = future.result()
-        if convertfunc:
-            result = convertfunc(result)
-        if not key:
-            setattr(self, attr, result)
-        else:
-            d = getattr(self, attr)
-            d[key] = result
-        signal.emit()
+        print("Load:", attr)
 
     def convert_to_pixmap(self, ba):
         """Convert the bytearray to a pixmap
@@ -899,7 +905,7 @@ class StreamItemData(BaseItemData):
     def maindata(self, stream, role):
         """Return the data for the given role
 
-        Returns the name for :data:`QtCore.Qt.DisplayRole`.
+p        Returns the name for :data:`QtCore.Qt.DisplayRole`.
         Returns the logo for :data:`QtCore.Qt.DecorationRole`.
 
         :param game: The game to query
