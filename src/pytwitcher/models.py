@@ -467,7 +467,16 @@ class QtUser(models.User):
 
 
 class Callbacker(object):
+    """Object to execute the load_callback.
 
+    This object has to live in the main thread,
+    so the slot gets executed! If not, qt tries to execute
+    the slot in the thread the callbacker was created in.
+    Because the eventloop is running in the main thread,
+    it will never get invoked.
+    """
+
+    @QtCore.Slot(object, str, QtCore.Signal, types.MethodType, str, futures.Future)
     def load_callback(self, obj, attr, signal, convertfunc, key, future):
         """Set the attr to the result of the future and emit the signal
 
@@ -495,22 +504,26 @@ class Callbacker(object):
         signal.emit()
 
 
-class LazyLoadMixin(QtCore.QObject):
-    """Mixin for lazyloading
+class DeferLoadMixin(QtCore.QObject):
+    """Mixin for deferred loading
     """
 
     callbacker = Callbacker()
+    """Object for the executing the callbacks. Should live in the main thread."""
     loadingFinished = QtCore.Signal(object, str, QtCore.Signal, types.MethodType, str, futures.Future)
     LOADING = 'LOADING'
 
     def __init__(self, *args, **kwargs):
-        super(LazyLoadMixin, self).__init__(*args, **kwargs)
+        super(DeferLoadMixin, self).__init__(*args, **kwargs)
         self.loadingFinished.connect(self.callbacker.load_callback, type=QtCore.Qt.QueuedConnection)
 
     def dummyconvert(self, arg):
+        """Needed so pyside can wrap the object when emitting the signal.
+        Pyside trying to wrap None will result in a segfault.
+        """
         return arg
 
-    def lazyload(self, loadfunc, attr, signal, convertfunc=None, key=''):
+    def deferload(self, loadfunc, attr, signal, convertfunc=None, key=''):
         """Defer calling loadfunc set attr with the result and emit signal
 
         :param loadfunc: the function to call for loading
@@ -544,11 +557,24 @@ class LazyLoadMixin(QtCore.QObject):
         p.loadFromData(ba)
         return p
 
-    def lazyload_pixmap(self, privattr, url, signal, key=None):
-        """Use the lazyload function to load the url and set it on the attribute
+    def _handle_loading(self, attr, key):
+        value = getattr(self, attr)
+        if key is not None:
+            value = value.get(key)
+        if value is self.LOADING:
+            return
+        if value:
+            return value
+        if key is None:
+            setattr(self, attr, self.LOADING)
+        else:
+            getattr(self, attr)[key] = self.LOADING
 
-        :param privattr: the private attr that is used to store the pixmap
-        :type privattr: :class:`str`
+    def deferload_pixmap(self, attr, url, signal, key=None):
+        """Use the deferload function to load the url and set it on the attribute
+
+        :param attr: the attribute name that is used to store the pixmap
+        :type attr: :class:`str`
         :param url: the url to load
         :type url: :class:`str`
         :param signal: the signal to emit after the loading is complete
@@ -558,25 +584,17 @@ class LazyLoadMixin(QtCore.QObject):
         :rtype: :class:`QtGui.QPixmap` | None
         :raises: None
         """
-        value = getattr(self, privattr)
-        if key is not None:
-            value = value.get(key)
-        if value is self.LOADING:
-            return
-        if value:
+        value = self._handle_loading(attr, key)
+        if value is not None:
             return value
-        if key is None:
-            setattr(self, privattr, self.LOADING)
-        else:
-            getattr(self, privattr)[key] = self.LOADING
         loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, url)
-        self.lazyload(loadfunc, privattr, signal, self.convert_to_pixmap, key)
+        self.deferload(loadfunc, attr, signal, self.convert_to_pixmap, key)
 
 
-class LazyQtGame(QtGame, LazyLoadMixin):
-    """Lazy loading class for twitch.tv Games.
+class DeferQtGame(QtGame, DeferLoadMixin):
+    """class for twitch.tv Games with deferred loading.
 
-    Lazily loads pictures and topstreams.
+    Loads pictures and topstreams deferred.
     """
 
     boxLoaded = QtCore.Signal()
@@ -584,19 +602,19 @@ class LazyQtGame(QtGame, LazyLoadMixin):
     topStreamsLoaded = QtCore.Signal()
 
     def __init__(self, session, cache, name, box, logo, twitchid, viewers=None, channels=None):
-        super(LazyQtGame, self).__init__(session, cache, name, box, logo,
+        super(DeferQtGame, self).__init__(session, cache, name, box, logo,
                                          twitchid, viewers, channels)
-        LazyLoadMixin.__init__(self)
+        DeferLoadMixin.__init__(self)
         self._box_pix = {}
         self._logo_pix = {}
     __init__.__doc__ = QtGame.__init__.__doc__
 
     def get_box(self, size):
-        return self.lazyload_pixmap('_box_pix', self.box[size], self.boxLoaded, size)
+        return self.deferload_pixmap('_box_pix', self.box[size], self.boxLoaded, size)
     get_box.__doc__ = QtGame.get_box.__doc__
 
     def get_logo(self, size):
-        return self.lazyload_pixmap('_logo_pix', self.logo[size], self.logoLoaded, size)
+        return self.deferload_pixmap('_logo_pix', self.logo[size], self.logoLoaded, size)
     get_logo.__doc__ = QtGame.get_logo.__doc__
 
     def top_streams(self, limit=25, force_refresh=False):
@@ -605,16 +623,16 @@ class LazyQtGame(QtGame, LazyLoadMixin):
         if self._top_streams is None or force_refresh:
             self._top_streams = self.LOADING
             loadfunc = functools.partial(self.session.get_streams, game=self, limit=limit)
-            self.lazyload(loadfunc, '_top_streams', self.topStreamsLoaded)
+            self.deferload(loadfunc, '_top_streams', self.topStreamsLoaded)
             return []
         return self._top_streams[:limit]
     top_streams.__doc__ = QtGame.top_streams.__doc__
 
 
-class LazyQtChannel(QtChannel, LazyLoadMixin):
-    """Lazy loading class for twitch.tv Channels.
+class DeferQtChannel(QtChannel, DeferLoadMixin):
+    """Class for twitch.tv Channels with deferred loading.
 
-    Lazily loads pictures.
+    Loads pictures deferred.
     """
 
     logoLoaded = QtCore.Signal()
@@ -626,11 +644,11 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
                  twitchid, views, followers, url, language,
                  broadcaster_language, mature, logo, banner, video_banner,
                  delay):
-        super(LazyQtChannel, self).__init__(session, cache, name, status, displayname,
+        super(DeferQtChannel, self).__init__(session, cache, name, status, displayname,
                                             game, twitchid, views, followers, url,
                                             language, broadcaster_language, mature,
                                             logo, banner, video_banner, delay)
-        LazyLoadMixin.__init__(self)
+        DeferLoadMixin.__init__(self)
         self._logo_pix = None
         self._smalllogo_pix = None
         self._banner_pix = None
@@ -639,38 +657,38 @@ class LazyQtChannel(QtChannel, LazyLoadMixin):
 
     @QtChannel.logo.getter
     def logo(self):
-        return self.lazyload_pixmap('_logo_pix', self._logo, self.logoLoaded)
+        return self.deferload_pixmap('_logo_pix', self._logo, self.logoLoaded)
 
     @QtChannel.smalllogo.getter
     def smalllogo(self):
-        return self.lazyload_pixmap('_smalllogo_pix', self._smalllogo, self.smalllogoLoaded)
+        return self.deferload_pixmap('_smalllogo_pix', self._smalllogo, self.smalllogoLoaded)
 
     @QtChannel.banner.getter
     def banner(self):
-        return self.lazyload_pixmap('_banner_pix', self._banner, self.bannerLoaded)
+        return self.deferload_pixmap('_banner_pix', self._banner, self.bannerLoaded)
 
     @QtChannel.video_banner.getter
     def video_banner(self):
-        return self.lazyload_pixmap('_video_banner_pix', self._video_banner, self.videoBannerLoaded)
+        return self.deferload_pixmap('_video_banner_pix', self._video_banner, self.videoBannerLoaded)
 
 
-class LazyQtStream(QtStream, LazyLoadMixin):
-    """Lazy loading class for twitch.tv streams.
+class DeferQtStream(QtStream, DeferLoadMixin):
+    """Class for twitch.tv streams with deferred loading.
 
-    Lazily loads pictures and quality options.
+    Doads pictures and quality options deferred.
     """
     previewLoaded = QtCore.Signal()
     qualityOptionsLoaded = QtCore.Signal()
 
     def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
-        super(LazyQtStream, self).__init__(session, cache, game, channel, twitchid,
+        super(DeferQtStream, self).__init__(session, cache, game, channel, twitchid,
                                            viewers, preview)
-        LazyLoadMixin.__init__(self)
+        DeferLoadMixin.__init__(self)
         self._preview = {}
     __init__.__doc__ = QtStream.__init__.__doc__
 
     def get_preview(self, size):
-        return self.lazyload_pixmap('_preview', self.preview[size], self.previewLoaded, size)
+        return self.deferload_pixmap('_preview', self.preview[size], self.previewLoaded, size)
     get_preview.__doc__ = QtStream.get_preview.__doc__
 
     @QtStream.quality_options.getter
@@ -681,22 +699,22 @@ class LazyQtStream(QtStream, LazyLoadMixin):
             return self._quality_options
         self._quality_options = self.LOADING
         loadfunc = functools.partial(self.session.get_quality_options, self.channel)
-        self.lazyload(loadfunc, '_quality_options', self.qualityOptionsLoaded)
+        self.deferload(loadfunc, '_quality_options', self.qualityOptionsLoaded)
         return []
 
 
-class LazyQtUser(QtUser, LazyLoadMixin):
-    """Lazy loading class for twitch.tv users.
+class DeferQtUser(QtUser, DeferLoadMixin):
+    """Class for twitch.tv users with deferred loading.
 
-    Lazily loads the logo
+    Loads the logo deferred.
     """
 
     logoLoaded = QtCore.Signal()
 
     def __init__(self, session, cache, usertype, name, logo, twitchid, displayname, bio):
-        super(LazyQtUser, self).__init__(session, cache, usertype, name, logo, twitchid,
+        super(DeferQtUser, self).__init__(session, cache, usertype, name, logo, twitchid,
                                      displayname, bio)
-        LazyLoadMixin.__init__(self)
+        DeferLoadMixin.__init__(self)
         self._logo_pix
     __init__.__doc__ = QtUser.__init__.__doc__
 
@@ -708,7 +726,7 @@ class LazyQtUser(QtUser, LazyLoadMixin):
             return self._logo_pix
         self._logo_pix = self.LOADING
         loadfunc = functools.partial(self.cache.bytearraycache.__getitem__, self._logo)
-        self.lazyload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
+        self.deferload(loadfunc, '_logo_pix', self.logoLoaded, self.convert_to_pixmap)
         return
 
 
@@ -780,14 +798,14 @@ class BaseItemData(treemodel.ItemData, QtCore.QObject):
 
 
 class GameItemData(BaseItemData):
-    """item data which represents :class:`LazyQtGame`
+    """item data which represents :class:`DeferQtGame`
     """
 
     def __init__(self, game, size='small'):
         """Initialize a new item data for the game
 
         :param game: the game to represents
-        :type game: :class:`LazyQtGame`
+        :type game: :class:`DeferQtGame`
         :param size: the size for the preview
         :type size: :class:`str`
         :raises: None
@@ -863,14 +881,14 @@ class GameItemData(BaseItemData):
 
 
 class StreamItemData(BaseItemData):
-    """item data which represents :class:`LazyQtStream`
+    """item data which represents :class:`DeferQtStream`
     """
 
     def __init__(self, stream, size='small'):
         """Initialize a new item data for the stream
 
         :param stream: the stream to represent
-        :type stream: :class:`LazyQtStream`
+        :type stream: :class:`DeferQtStream`
         :param size: the size for the preview
         :type size: :class:`str`
         :raises: None
