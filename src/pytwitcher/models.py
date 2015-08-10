@@ -195,8 +195,10 @@ class QtChannel(models.Channel):
                                         language, broadcaster_language, mature,
                                         logo, banner, video_banner, delay)
         self._logo = logo
-        self._smalllogo = logo.replace('-300x300.jpeg', '-50x50.jpeg') if logo\
+        self._smalllogo = logo.replace('-300x300.', '-50x50.') if logo\
                           else None
+        if self._logo == self._smalllogo:
+            print(self._smalllogo)
         self._banner = banner
         self._video_banner = video_banner
         self.session = session
@@ -680,6 +682,13 @@ class DeferQtStream(QtStream, DeferLoadMixin):
     previewLoaded = QtCore.Signal()
     qualityOptionsLoaded = QtCore.Signal()
 
+    @classmethod
+    def from_stream(cls, session, cache, stream):
+        channel = DeferQtChannel.from_channel(session, cache, stream.channel)
+        return cls(session, cache, stream.game, channel, stream.twitchid,
+                   stream.viewers, stream.preview)
+    from_stream.__doc__ = QtStream.from_stream.__doc__
+
     def __init__(self, session, cache, game, channel, twitchid, viewers, preview):
         super(DeferQtStream, self).__init__(session, cache, game, channel, twitchid,
                                            viewers, preview)
@@ -901,7 +910,7 @@ class StreamItemData(BaseItemData):
     def maindata(self, stream, role):
         """Return the data for the given role
 
-p        Returns the name for :data:`QtCore.Qt.DisplayRole`.
+        Returns the name for :data:`QtCore.Qt.DisplayRole`.
         Returns the logo for :data:`QtCore.Qt.DecorationRole`.
 
         :param game: The game to query
@@ -932,7 +941,12 @@ p        Returns the name for :data:`QtCore.Qt.DisplayRole`.
         if role == QtCore.Qt.DisplayRole:
             return str(stream.viewers)
 
-    columns = [maindata, viewersdata]
+    def channelsmalllogo(self, stream, role):
+        if role == QtCore.Qt.DecorationRole:
+            logo = stream.channel.smalllogo
+            return logo
+
+    columns = [maindata, viewersdata, channelsmalllogo]
 
 
 class TreeItem(treemodel.TreeItem):
