@@ -84,6 +84,10 @@ class VideoPlayer(QtGui.QWidget):
         if event.type() == QtCore.QEvent.Wheel and event.orientation() == QtCore.Qt.Vertical:
             d = event.delta() / 2400
             vol = self.audio_out.volume() + d
+            if vol < 0:
+                vol = 0
+            if vol > 2.0:
+                vol = 2.0
             self.audio_out.setVolume(vol)
             self.screen_widget.set_status("Volume: {0}%".format(int(vol * 100)))
         if event.type() == QtCore.QEvent.KeyRelease and event.key() == QtCore.Qt.Key_Space:
