@@ -1008,6 +1008,17 @@ class GameItem(TreeItem):
             data = StreamItemData(s, self.itemdata().size)
             StreamItem(data, self)
 
+    def reload_children(self, ):
+        """Reload all the children
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        for c in list(self.childItems):
+            self.remove_child(c)
+        self.itemdata().internalobj.top_streams(limit=self.maxstreams, force_refresh=True)
+
 
 class StreamItem(TreeItem):
     """Treeitem that automatically loads the quality options
@@ -1037,3 +1048,15 @@ class StreamItem(TreeItem):
         for o in qo:
             data = treemodel.ListItemData([o])
             treemodel.TreeItem(data, self)
+
+    def reload_children(self, ):
+        """Reload all the children
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        for c in list(self.childItems):
+            self.remove_child(c)
+        self.itemdata().internalobj._quality_options = None
+        self.itemdata().internalobj.quality_options
