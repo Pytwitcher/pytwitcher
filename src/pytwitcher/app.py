@@ -4,7 +4,6 @@ import webbrowser
 
 from PySide import QtGui, QtCore
 from easymodel import treemodel
-import qmenuview
 
 from pytwitcher import menus, models, player, pool, session, tray, utils
 
@@ -46,7 +45,7 @@ class PyTwitcherApp(object):
 
         self.mainmenu = menus.MainMenu(self)
         """The pytwicher main :class:`mainmenu.MainMenu`"""
-#        self.tray = tray.PytwitcherTray(self.mainmenu)
+        self.tray = tray.PytwitcherTray(self.mainmenu)
         """The :class:`tray.PytwitcherTray` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.mwin = PyTwitcherWin(mainmenu=self.mainmenu)
         self.topgamesmodel = self.create_top_games_model('small', 10, 10)
@@ -91,7 +90,7 @@ class PyTwitcherApp(object):
         :rtype: None | :class:`int`
         :raises: None
         """
-#        self.tray.show()
+        self.tray.show()
         self.mwin.show()
         if exec_ is True:
             self._called_exec = exec_
@@ -107,7 +106,7 @@ class PyTwitcherApp(object):
         :raises: None
         """
         self.pool.shutdown()
-#        self.tray.hide()
+        self.tray.hide()
         if self._called_exec:
             self.qapp.quit()
 
