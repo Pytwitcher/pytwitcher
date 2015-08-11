@@ -271,7 +271,7 @@ class PyTwitcherWin(QtGui.QMainWindow):
                  ('Channels', 'channelview'),
                  ('Quality', 'qoview'))
         for tab, attr in views:
-            v = QtGui.QTableView()
+            v = TableView()
             setattr(self, attr, v)
             v.setSelectionMode(v.NoSelection)
             v.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
@@ -337,3 +337,20 @@ class PyTwitcherWin(QtGui.QMainWindow):
         quality = index.data(QtCore.Qt.DisplayRole)
         stream = index.parent().data(treemodel.INTERNAL_OBJ_ROLE)
         self.player.play(stream, quality)
+
+
+class TableView(QtGui.QTableView):
+
+    def setRootIndex(self, index):
+        self.lastroot = index
+        super(TableView, self).setRootIndex(index)
+
+    def rowsAboutToBeRemoved(self, parent, start, end):
+        # root has changed, because root was also removed
+        # the root was reset to an invalid index
+        # This means we might see data from another hierarchy level now
+        # better set model to None
+        if not self.rootIndex() and self.rootIndex() != self.lastroot:
+            self.setModel(None)
+            return
+        super(TableView, self).rowsAboutToBeRemoved(parent, start, end)
