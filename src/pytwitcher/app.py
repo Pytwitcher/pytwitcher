@@ -2,6 +2,7 @@ import logging
 import sys
 import webbrowser
 
+import requests
 from PySide import QtGui, QtCore
 from easymodel import treemodel
 import qdarkstyle
@@ -13,6 +14,8 @@ HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
 
 
 logging.basicConfig(level=logging.INFO)
+rl = logging.getLogger('requests')
+rl.setLevel(logging.WARNING)
 
 
 class PyTwitcherApp(object):
@@ -43,6 +46,10 @@ class PyTwitcherApp(object):
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
         self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
         self.session = session.QtTwitchSession(self.pool)
+        ahttp = requests.adapters.HTTPAdapter(pool_connections=50, pool_maxsize=50)
+        ahttps = requests.adapters.HTTPAdapter(pool_connections=50, pool_maxsize=50)
+        self.session.mount('http://', ahttp)
+        self.session.mount('https://', ahttps)
         """The :class:`session.QtTwitchSession` that is used for all queries."""
 
         self.mainmenu = menus.MainMenu(self)
