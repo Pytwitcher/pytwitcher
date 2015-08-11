@@ -44,13 +44,14 @@ class PyTwitcherApp(object):
         self.session = session.QtTwitchSession(self.pool)
         """The :class:`session.QtTwitchSession` that is used for all queries."""
 
-#        self.mainmenu = menus.MainMenu(self)
+        self.mainmenu = menus.MainMenu(self)
         """The pytwicher main :class:`mainmenu.MainMenu`"""
 #        self.tray = tray.PytwitcherTray(self.mainmenu)
         """The :class:`tray.PytwitcherTray` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
-        self.mwin = PyTwitcherWin()
+        self.mwin = PyTwitcherWin(mainmenu=self.mainmenu)
         self.topgamesmodel = self.create_top_games_model('small', 10, 10)
         self.mwin.set_top_games_model(self.topgamesmodel)
+        self.mainmenu.set_top_games_model(self.topgamesmodel)
 
     def create_top_games_model(self, logosize, maxgames, maxstreams):
         """Create a new treemodel with topgames and topstreams
@@ -134,18 +135,19 @@ class PyTwitcherWin(QtGui.QMainWindow):
     """The main pytwitcher gui
     """
 
-    def __init__(self,):
+    def __init__(self, mainmenu):
         """Inizialize a new pytwitcher window
 
+        :param mainmenu: the main menu to use
+        :type mainmenu: :class:`QtGui.QMenu`
         :raises: None
         """
         super(PyTwitcherWin, self).__init__(None)
+        self.mainmenu = mainmenu
+        self.mainmenu.streamsmenu.action_triggered.connect(self.play)
         mb = self.menuBar()
         mb.setNativeMenuBar(False)
-        self.menuview = qmenuview.MenuView("Games")
-        self.menuview.setdataargs[3] = self.menuview.setdataargs[3]._replace(column=0)
-        self.menuview.action_triggered.connect(self.handle_menuclick)
-        mb.addMenu(self.menuview)
+        mb.addMenu(self.mainmenu)
         logo = utils.get_logo()
         self.setWindowIcon(logo)
 
@@ -184,14 +186,6 @@ class PyTwitcherWin(QtGui.QMainWindow):
         :raises: None
         """
         self.gameview.setModel(model)
-        self.menuview.model = model
-
-    def handle_menuclick(self, index, ):
-        print(index)
-        for m in [self.setgame, self.setchannel, self.play]:
-            p = index.parent()
-            if not p.isValid():
-                m(index)
 
     def setgame(self, index):
         if self.channelview.model() is not index.model():
