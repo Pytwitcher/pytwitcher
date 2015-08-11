@@ -197,8 +197,6 @@ class QtChannel(models.Channel):
         self._logo = logo
         self._smalllogo = logo.replace('-300x300.', '-50x50.') if logo\
                           else None
-        if self._logo == self._smalllogo:
-            print(self._smalllogo)
         self._banner = banner
         self._video_banner = video_banner
         self.session = session
@@ -586,6 +584,8 @@ class DeferLoadMixin(QtCore.QObject):
         :rtype: :class:`QtGui.QPixmap` | None
         :raises: None
         """
+        if not url:
+            return
         value = self._handle_loading(attr, key)
         if value is not None:
             return value
