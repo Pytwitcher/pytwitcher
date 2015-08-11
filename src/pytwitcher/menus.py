@@ -3,7 +3,6 @@ off the application and as a context menu of the tray icon."""
 
 import logging
 import sys
-import weakref
 import functools
 
 from PySide import QtGui
@@ -17,64 +16,7 @@ else:
 log = logging.getLogger(__name__)
 
 
-class NoHideMenu(QtGui.QMenu):
-    """This menu can contain actions which are triggered
-     but do not close the menu.
-
-    Use :meth:`NoHideMenu.add_nohide_action` for this feature.
-
-    .. Important:: The references to the added actions are weak.
-                   So make sure to reference them somewhere else.
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        """Initialize a new menu.
-
-        Use the usual menu arguments.
-
-        :raises: None
-        """
-        super(NoHideMenu, self).__init__(*args, **kwargs)
-        self._nohide_actions = weakref.WeakSet([])
-
-    def add_nohide_action(self, action):
-        """Menu will not get hidden if the action is triggered.
-
-        :param action: the action which should not trigger hide
-        :type action: :class:`QtGui.QAction`
-        :returns: None
-        :rtype: None
-        :raises: None
-        """
-        self._nohide_actions.add(action)
-
-    def remove_nohide_action(self, action):
-        """Remove the given action so it will hide when triggered
-
-        :param action:the action wich should trigger hide
-        :type action: :class:`QtGui.QAction`
-        :returns: None
-        :rtype: None
-        :raises: None
-        """
-        try:
-            self._nohide_actions.remove(action)
-        except KeyError:
-            pass
-
-    def mouseReleaseEvent(self, e):
-        action = self.activeAction()
-        if action and action.isEnabled() and not action.menu() and action in self._nohide_actions:
-            action.setEnabled(False)
-            super(NoHideMenu, self).mouseReleaseEvent(e)
-            action.setEnabled(True)
-            action.trigger()
-        else:
-            super(NoHideMenu, self).mouseReleaseEvent(e)
-
-
-class MainMenu(NoHideMenu):
+class MainMenu(QtGui.QMenu):
     """The main menu that will be displayed at the top
     off the application and as a context menu of the tray icon"""
 
@@ -110,6 +52,18 @@ class MainMenu(NoHideMenu):
         cb = functools.partial(self.followingmenu.menuAction().setVisible, True)
         self.app.login.connect(cb)
 
+    def setVisible(self, visible):
+        """Do not hide!
+
+        :param visible: If True, show the menu
+        :type visible: :class:`bool`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        if visible:
+            super(MainMenu, self).setVisible(visible)
+
     def add_submenus(self, ):
         """Add submenus to the main menu
 
@@ -132,7 +86,7 @@ class MainMenu(NoHideMenu):
         self.followingmenu.menuAction().setVisible(False)
         self.seperator1 = self.addSeparator()
         self.addAction(self.loginaction)
-        self.add_nohide_action(self.loginaction)
+        self.addAction(self.loginaction)
         self.seperator2 = self.addSeparator()
         self.addAction(self.helpaction)
         self.seperator3 = self.addSeparator()
@@ -155,7 +109,7 @@ class LoginAction(QtGui.QAction):
         :rtype: None
         :raises: None
         """
-        self.setText("Please log in the browser. Click when finished.")
+        self.setText("Click when finished.")
         self.triggered.disconnect(self.login)
         self.triggered.connect(self.shutdown)
         self.app.session.start_login_server()
