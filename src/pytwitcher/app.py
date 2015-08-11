@@ -39,19 +39,10 @@ class PyTwitcherApp(object):
         :raises: None
         """
         super(PyTwitcherApp, self).__init__()
-        self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
-#        self.qapp.setQuitOnLastWindowClosed(False)
-        self.qapp.setStyleSheet(qdarkstyle.load_stylesheet())
-        self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
+        self.setup_qapp()
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
         self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
-        self.session = session.QtTwitchSession(self.pool)
-        ahttp = requests.adapters.HTTPAdapter(pool_connections=50, pool_maxsize=50)
-        ahttps = requests.adapters.HTTPAdapter(pool_connections=50, pool_maxsize=50)
-        self.session.mount('http://', ahttp)
-        self.session.mount('https://', ahttps)
-        """The :class:`session.QtTwitchSession` that is used for all queries."""
-
+        self.create_session(50)
         self.mainmenu = menus.MainMenu(self)
         """The pytwicher main :class:`mainmenu.MainMenu`"""
         self.tray = tray.PytwitcherTray(self.mainmenu)
@@ -60,6 +51,33 @@ class PyTwitcherApp(object):
         self.topgamesmodel = self.create_top_games_model('small', 5, 10)
         self.mwin.set_top_games_model(self.topgamesmodel)
         self.mainmenu.set_top_games_model(self.topgamesmodel)
+
+    def setup_qapp(self, ):
+        """Setup the QApplication
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
+        # self.qapp.setQuitOnLastWindowClosed(False)
+        self.qapp.setStyleSheet(qdarkstyle.load_stylesheet())
+        self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
+
+    def create_session(self, poolsize):
+        """Create a new session and create connectionpools for
+        http and https.
+
+        :param poolsize: Number of maximum connections per pool
+        :type poolsize: :class:`int`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.session = session.QtTwitchSession(self.pool)
+        for mountpoint in ('http://', 'https;//'):
+            a = requests.adapters.HTTPAdapter(pool_connections=poolsize, pool_maxsize=poolsize)
+            self.session.moint(mountpoint, a)
 
     def create_top_games_model(self, logosize, maxgames, maxstreams):
         """Create a new treemodel with topgames and topstreams
