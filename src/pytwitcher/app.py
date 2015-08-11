@@ -4,6 +4,7 @@ import webbrowser
 
 from PySide import QtGui, QtCore
 from easymodel import treemodel
+import qdarkstyle
 
 from pytwitcher import menus, models, player, pool, session, tray, utils
 
@@ -37,6 +38,7 @@ class PyTwitcherApp(object):
         super(PyTwitcherApp, self).__init__()
         self.qapp = QtGui.QApplication.instance() or QtGui.QApplication([])
 #        self.qapp.setQuitOnLastWindowClosed(False)
+        self.qapp.setStyleSheet(qdarkstyle.load_stylesheet())
         self.qapp.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
         self._called_exec = False  # Save, if launch called qapp.exec_ for quit.
         self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
@@ -48,7 +50,7 @@ class PyTwitcherApp(object):
         self.tray = tray.PytwitcherTray(self.mainmenu)
         """The :class:`tray.PytwitcherTray` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.mwin = PyTwitcherWin(mainmenu=self.mainmenu)
-        self.topgamesmodel = self.create_top_games_model('small', 10, 10)
+        self.topgamesmodel = self.create_top_games_model('small', 5, 10)
         self.mwin.set_top_games_model(self.topgamesmodel)
         self.mainmenu.set_top_games_model(self.topgamesmodel)
 
