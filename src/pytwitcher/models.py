@@ -905,7 +905,9 @@ class StreamItemData(BaseItemData):
         super(StreamItemData, self).__init__(stream)
         self.size = size
         """The size for the logos. 'large', 'medium' or 'small'"""
-        self.internalobj.previewLoaded.connect(functools.partial(self.dataChanged.emit, 0))
+        s = self.internalobj
+        s.previewLoaded.connect(functools.partial(self.dataChanged.emit, 2))
+        s.channel.smalllogoLoaded.connect(functools.partial(self.dataChanged.emit, 0))
 
     def maindata(self, stream, role):
         """Return the data for the given role
