@@ -217,9 +217,7 @@ class PyTwitcherWin(QtGui.QMainWindow):
         """
         logo = utils.get_logo()
         self.setWindowIcon(logo)
-        mb = self.menuBar()
-        mb.setNativeMenuBar(False)
-        mb.addMenu(self.mainmenu)
+        self.create_toolbar()
 
         self.tab_widget = QtGui.QTabWidget()
         views = (('Following', 'followview'),
@@ -240,6 +238,26 @@ class PyTwitcherWin(QtGui.QMainWindow):
         self.tab_widget.addTab(self.player, 'Player')
         self.setCentralWidget(self.tab_widget)
         self.resize(600, 400)
+
+    def create_toolbar(self, ):
+        """Create the toolbar with the main menu
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.toolbar = QtGui.QToolBar()
+        self.toolbar.setFloatable(False)
+        self.toolbar.setMovable(False)
+        self.toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonFollowStyle)
+        self.addToolBar(QtCore.Qt.LeftToolBarArea, self.toolbar)
+        for a in self.mainmenu.actions():
+            self.toolbar.addAction(a)
+            if a.isSeparator():
+                continue
+            w = self.toolbar.widgetForAction(a)
+            w.setPopupMode(w.InstantPopup)
+            w.setStyleSheet('QToolButton::menu-indicator { image: none; }')
 
     def setgame(self, index):
         if self.channelview.model() is not index.model():
