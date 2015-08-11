@@ -3,12 +3,10 @@ import sys
 import webbrowser
 
 from PySide import QtGui, QtCore
-from PySide.phonon import Phonon
 from easymodel import treemodel
-import livestreamer
 import qmenuview
 
-from pytwitcher import menus, models, pool, session, tray, utils
+from pytwitcher import menus, models, player, pool, session, tray, utils
 
 
 HELP_URL = "http://pytwitcher.readthedocs.org/en/develop/userdoc/index.html"
@@ -51,15 +49,30 @@ class PyTwitcherApp(object):
 #        self.tray = tray.PytwitcherTray(self.mainmenu)
         """The :class:`tray.PytwitcherTray` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.mwin = PyTwitcherWin()
+        self.topgamesmodel = self.create_top_games_model('small', 10, 10)
+        self.mwin.set_top_games_model(self.topgamesmodel)
+
+    def create_top_games_model(self, logosize, maxgames, maxstreams):
+        """Create a new treemodel with topgames and topstreams
+
+        :param logosize: the size of the logos. ``small``, ``medium`` or ``large``.
+        :type logosize: :class:`str`
+        :param maxgames: the maximum number of games
+        :type maxgames: :class:`int`
+        :param maxstreams: the maximum number of streams
+        :type maxstreams: :class:`int`
+        :returns: the created logo
+        :rtype: None
+        :raises: None
+        """
         headers = ['Name', 'Viewers', 'Channels', 'Box']
         rootdata = treemodel.ListItemData(headers)
         rootitem = treemodel.TreeItem(rootdata, parent=None)
-        self.topgames = self.session.top_games(limit=5)
-        for g in self.topgames[:5]:
-            data = models.GameItemData(g, 'small')
-            models.GameItem(data, rootitem, maxstreams=10)
-        self.topgamesmodel = treemodel.TreeModel(rootitem)
-        self.mwin.set_top_games_model(self.topgamesmodel)
+        topgames = self.session.top_games(limit=maxgames)
+        for g in topgames[:maxgames]:
+            data = models.GameItemData(g, logosize)
+            models.GameItem(data, rootitem, maxstreams=maxstreams)
+        return treemodel.TreeModel(rootitem)
 
     def launch(self, exec_=True):
         """Start app.
@@ -152,14 +165,7 @@ class PyTwitcherWin(QtGui.QMainWindow):
         self.tab_widget.addTab(self.gameview, 'Games')
         self.tab_widget.addTab(self.channelview, 'Channels')
         self.tab_widget.addTab(self.qoview, 'Quality')
-
-        self.player = Phonon.VideoWidget()
-        self.media_obj = Phonon.MediaObject()
-        self.streamdevice = None
-        Phonon.createPath(self.media_obj, self.player)
-        self.audio_out = Phonon.AudioOutput(Phonon.VideoCategory)
-
-        Phonon.createPath(self.media_obj, self.audio_out)
+        self.player = player.VideoPlayer(self)
         self.tab_widget.addTab(self.player, 'Player')
 
         self.gameview.clicked.connect(self.setgame)
@@ -201,50 +207,6 @@ class PyTwitcherWin(QtGui.QMainWindow):
 
     def play(self, index):
         self.tab_widget.setCurrentWidget(self.player)
-        qo = index.data(QtCore.Qt.DisplayRole)
+        quality = index.data(QtCore.Qt.DisplayRole)
         stream = index.parent().data(treemodel.INTERNAL_OBJ_ROLE)
-        url = stream.channel.url
-        ls = livestreamer.Livestreamer()
-        ls.set_loglevel("info")
-        ls.set_logoutput(sys.stdout)
-        try:
-            streams = ls.streams(url)
-        except livestreamer.NoPluginError:
-            print("Livestreamer is unable to handle the URL '{0}'".format(url))
-            return
-        except livestreamer.PluginError as err:
-            print("Plugin error: {0}".format(err))
-            return
-        if not streams:
-            print("No streams found on URL '{0}'".format(url))
-            return
-        if qo not in streams:
-            print("Unable to find '{0}' stream on URL '{1}'".format(qo, url))
-            return
-        stream = streams[qo]
-        if self.streamdevice:
-            self.streamdevice.close()
-        self.streamdevice = StreamDevice(stream, parent=self)
-        media_src = Phonon.MediaSource(self.streamdevice)
-        self.media_obj.setCurrentSource(media_src)
-        self.media_obj.play()
-
-
-class StreamDevice(QtCore.QIODevice):
-    def __init__(self, stream, parent=None):
-        super(StreamDevice, self).__init__(parent)
-        self.fd = stream.open()
-
-    def readData(self, maxlen):
-        data = self.fd.read(maxlen)
-        if not data:
-            self.fd.close()
-        return data
-
-    def writeData(self, data):
-        return
-
-    def close(self, *args, **kwargs):
-        super(StreamDevice, self).close(*args, **kwargs)
-        self.fd.close()
-
+        self.player.play(stream, quality)
