@@ -50,16 +50,16 @@ class VideoPlayer(QtGui.QWidget):
         try:
             streams = self.streamer.streams(url)
         except livestreamer.NoPluginError:
-            print("Livestreamer is unable to handle the URL '%s'" % url)
+            self.screen_widget.set_status("Livestreamer is unable to handle the URL '%s'" % url)
             return
         except livestreamer.PluginError as err:
-            print("Plugin error: %s" % err)
+            self.screen_widget.set_status("Plugin error: %s" % err)
             return
         if not streams:
-            print("No streams found on URL '%s'" % url)
+            self.screen_widget.set_status("No streams found on URL '%s'" % url)
             return
         elif quality not in streams:
-            raise ValueError("Unable to find '%s' stream on URL %s" % (quality, url))
+            self.screen_widget.set_status("Unable to find '%s' stream on URL %s" % (quality, url))
         streamobj = streams[quality]
         if self.streamdevice:
             self.streamdevice.close()
