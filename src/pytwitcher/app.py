@@ -152,37 +152,42 @@ class PyTwitcherWin(QtGui.QMainWindow):
         """
         super(PyTwitcherWin, self).__init__(None)
         self.mainmenu = mainmenu
+        self.setup_ui()
         self.mainmenu.streamsmenu.action_triggered.connect(self.play)
-        mb = self.menuBar()
-        mb.setNativeMenuBar(False)
-        mb.addMenu(self.mainmenu)
-        logo = utils.get_logo()
-        self.setWindowIcon(logo)
-
-        self.tab_widget = QtGui.QTabWidget()
-        self.gameview = QtGui.QTableView()
-        self.gameview.setSelectionMode(self.gameview.NoSelection)
-        self.gameview.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.gameview.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.channelview = QtGui.QTableView()
-        self.channelview.setSelectionMode(self.channelview.NoSelection)
-        self.channelview.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.channelview.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.qoview = QtGui.QTableView()
-        self.qoview.setSelectionMode(self.qoview.NoSelection)
-        self.qoview.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.qoview.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        self.tab_widget.addTab(self.gameview, 'Games')
-        self.tab_widget.addTab(self.channelview, 'Channels')
-        self.tab_widget.addTab(self.qoview, 'Quality')
-        self.player = player.VideoPlayer(self)
-        self.tab_widget.addTab(self.player, 'Player')
 
         self.gameview.clicked.connect(self.setgame)
         self.channelview.clicked.connect(self.setchannel)
         self.qoview.clicked.connect(self.play)
+
+    def setup_ui(self, ):
+        """Create the user interface
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        logo = utils.get_logo()
+        self.setWindowIcon(logo)
+        mb = self.menuBar()
+        mb.setNativeMenuBar(False)
+        mb.addMenu(self.mainmenu)
+
+        self.tab_widget = QtGui.QTabWidget()
+        views = (('Games', 'gameview'),
+                 ('Channels', 'channelview'),
+                 ('Quality', 'qoview'))
+        for tab, attr in views:
+            v = QtGui.QTableView()
+            setattr(self, attr, v)
+            v.setSelectionMode(v.NoSelection)
+            v.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+            v.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+            self.tab_widget.addTab(v, tab)
+        self.player = player.VideoPlayer(self)
+        self.tab_widget.addTab(self.player, 'Player')
         self.setCentralWidget(self.tab_widget)
         self.resize(600, 400)
+
 
     def set_top_games_model(self, model):
         """Set the top games model
