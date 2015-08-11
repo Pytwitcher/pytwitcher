@@ -26,6 +26,10 @@ class PyTwitcherApp(QtCore.QObject):
 
     login = QtCore.Signal()
     """User completed the login process."""
+    reloadGamesModel = QtCore.Signal(QtCore.QModelIndex)
+    """Reload topgames model at the given parent index"""
+    reloadFollowModel = QtCore.Signal(QtCore.QModelIndex)
+    """Reload following model at the given parent index"""
 
     def __init__(self, ):
         """Initialize a new pytwitcher app.
@@ -47,7 +51,9 @@ class PyTwitcherApp(QtCore.QObject):
         self.pool = pool.MeanThreadPoolExecutor(max_workers=20)
         self.create_session(50)
         self.logosize = 'small'
-        self.topgamesmodel = self.create_top_games_model(5, 10)
+        self.maxgames = 5
+        self.maxstreams = 10
+        self.topgamesmodel = self.create_top_games_model()
         self.followingmodel = self.create_following_model()
         self.mainmenu = menus.MainMenu(self)
         """The pytwicher main :class:`mainmenu.MainMenu`"""
@@ -55,6 +61,8 @@ class PyTwitcherApp(QtCore.QObject):
         """The :class:`tray.PytwitcherTray` that will give quick access to :data:`PyTwitcherApp.mainmenu`."""
         self.mwin = PyTwitcherWin(self)
         self.login.connect(self.login_finished)
+        self.reloadGamesModel.connect(self._reloadGamesModel)
+        self.reloadFollowModel.connect(self._reloadFollowModel)
 
     def setup_qapp(self, ):
         """Setup the QApplication
@@ -83,13 +91,9 @@ class PyTwitcherApp(QtCore.QObject):
             a = requests.adapters.HTTPAdapter(pool_connections=poolsize, pool_maxsize=poolsize)
             self.session.mount(mountpoint, a)
 
-    def create_top_games_model(self, maxgames, maxstreams):
+    def create_top_games_model(self):
         """Create a new treemodel with topgames and topstreams
 
-        :param maxgames: the maximum number of games
-        :type maxgames: :class:`int`
-        :param maxstreams: the maximum number of streams
-        :type maxstreams: :class:`int`
         :returns: the created treemodel
         :rtype: :class:`treemodel.TreeModel`
         :raises: None
@@ -97,10 +101,10 @@ class PyTwitcherApp(QtCore.QObject):
         headers = ['Name', 'Viewers', 'Channels', 'Box']
         rootdata = treemodel.ListItemData(headers)
         rootitem = treemodel.TreeItem(rootdata, parent=None)
-        topgames = self.session.top_games(limit=maxgames)
-        for g in topgames[:maxgames]:
+        topgames = self.session.top_games(limit=self.maxgames)
+        for g in topgames[:self.maxgames]:
             data = models.GameItemData(g, self.logosize)
-            models.GameItem(data, rootitem, maxstreams=maxstreams)
+            models.GameItem(data, rootitem, maxstreams=self.maxstreams)
         return treemodel.TreeModel(rootitem)
 
     def create_following_model(self,):
@@ -116,6 +120,45 @@ class PyTwitcherApp(QtCore.QObject):
         rootdata = treemodel.ListItemData(headers)
         rootitem = treemodel.TreeItem(rootdata, parent=None)
         return treemodel.TreeModel(rootitem)
+
+    def _reloadFollowModel(self, index):
+        """Reload the followingmodel at the given parent index
+
+        :param index: the parent index
+        :type index: :class:`QtCore.QModelIndex`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        if index.isValid():
+            item = index.data(treemodel.TREEITEM_ROLE)
+            item.reload_children()
+        else:
+            r = self.followingmodel.root
+            for c in list(r.childItems):
+                r.remove_child(c)
+            self.login_finished()
+
+    def _reloadGamesModel(self, index):
+        """Reload the topgamesmodel at the given parent index
+
+        :param index: the parent index
+        :type index: :class:`QtCore.QModelIndex`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        if index.isValid():
+            item = index.data(treemodel.TREEITEM_ROLE)
+            item.reload_children()
+        else:
+            r = self.topgamesmodel.root
+            for c in list(r.childItems):
+                r.remove_child(c)
+            topgames = self.session.top_games(limit=self.maxgames)
+            for g in topgames[:self.maxgames]:
+                data = models.GameItemData(g, self.logosize)
+                models.GameItem(data, r, maxstreams=self.maxstreams)
 
     def login_finished(self, ):
         """Load the following streams
@@ -220,6 +263,9 @@ class PyTwitcherWin(QtGui.QMainWindow):
         self.create_toolbar()
 
         self.tab_widget = QtGui.QTabWidget()
+        self.reload_pb = QtGui.QPushButton('reload')
+        self.tab_widget.setCornerWidget(self.reload_pb)
+        self.reload_pb.clicked.connect(self.reload_cb)
         views = (('Following', 'followview'),
                  ('Games', 'gameview'),
                  ('Channels', 'channelview'),
@@ -258,6 +304,21 @@ class PyTwitcherWin(QtGui.QMainWindow):
             w = self.toolbar.widgetForAction(a)
             w.setPopupMode(w.InstantPopup)
             w.setStyleSheet('QToolButton::menu-indicator { image: none; }')
+
+    def reload_cb(self, ):
+        """Reload the currently open tab
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        w = self.tab_widget.currentWidget()
+        i = w.rootIndex()
+        m = w.model()
+        if m == self.app.topgamesmodel:
+            self.app.reloadGamesModel.emit(i)
+        elif m == self.app.followingmodel:
+            self.app.reloadFollowModel.emit(i)
 
     def setgame(self, index):
         if self.channelview.model() is not index.model():
