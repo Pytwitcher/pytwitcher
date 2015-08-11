@@ -6,6 +6,7 @@ import sys
 import weakref
 
 from PySide import QtGui, QtCore
+import qmenuview
 
 if sys.version_info[0] == 2:
     import futures
@@ -228,6 +229,8 @@ class MainMenu(NoHideMenu):
     def __init__(self, app, name="Pytwicher"):
         """The name of the main menu
 
+        :param topgamesmodel: the model for the games menu view
+        :type topgamesmodel: :class:`QtCore.QAbstractItemModel`
         :param app: the pytwitcher app that needs a main menu
         :type app: :class:`pytwitcher.app.PyTwicherApp`
         :param name: the label text of the menu
@@ -240,7 +243,7 @@ class MainMenu(NoHideMenu):
         self.app = app
         """The pytwicherapp that created this menu"""
         self.streamsmenu = None
-        """The top games/streams :class:`StreamsMenu`."""
+        """The top games/streams :class:`qmenuview.MenuView`."""
         self.helpaction = None
         """The :class:`QtGui.QAction` which triggers
         :meth:`pytwicher.app.PyTwitcherApp.show_help`."""
@@ -249,8 +252,18 @@ class MainMenu(NoHideMenu):
         :meth:`pytwitcher.app.PyTwicherApp.quit_app`."""
         self.loginaction = None
         """The :class:`LoginAction` where the user can login."""
-
         self.add_submenus()
+
+    def set_top_games_model(self, model):
+        """Set the topgames model for the menu view
+
+        :param model: the model for the games menu view
+        :type model: :class:`QtCore.QAbstractItemModel`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        self.streamsmenu.model = model
 
     def add_submenus(self, ):
         """Add submenus to the main menu
@@ -259,7 +272,7 @@ class MainMenu(NoHideMenu):
         :rtype: None
         :raises: None
         """
-        self.streamsmenu = StreamsMenu(self.app)
+        self.streamsmenu = qmenuview.MenuView("Games")
         self.loginaction = LoginAction(self.app, self)
         self.helpaction = QtGui.QAction("Help", self)
         self.helpaction.triggered.connect(self.app.show_help)
