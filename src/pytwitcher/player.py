@@ -113,6 +113,7 @@ class VideoScreen(Phonon.VideoWidget):
         """
         super(VideoScreen, self).__init__(parent)
         self.status_lb = QtGui.QLabel('', self)
+        self.status_lb.hide()
         self.timer = QtCore.QTimer(self)
         self.timer.setSingleShot(True)
         self.timer.setInterval(1000)
