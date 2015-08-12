@@ -350,7 +350,7 @@ class TableView(QtGui.QTableView):
         # the root was reset to an invalid index
         # This means we might see data from another hierarchy level now
         # better set model to None
-        if not self.rootIndex() and self.rootIndex() != self.lastroot:
+        if not self.rootIndex().isValid() and self.rootIndex() != self.lastroot:
             self.setModel(None)
             return
         super(TableView, self).rowsAboutToBeRemoved(parent, start, end)
