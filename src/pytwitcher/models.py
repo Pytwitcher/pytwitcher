@@ -8,6 +8,7 @@ import functools
 import subprocess
 import sys
 import types
+import collections
 
 from PySide import QtCore, QtGui
 from easymodel import treemodel
@@ -480,6 +481,11 @@ class Callbacker(object):
     def load_callback(self, obj, attr, signal, convertfunc, key, future):
         """Set the attr to the result of the future and emit the signal
 
+        If key, the attr is assumed to be a dict.
+        If the attr is a list, and the result is iterable,
+        it will be extended. If the result is not iterable, the result will be appended.
+        If attr is not a list, the attribute is simply set.
+
         :param obj: the object to set the attribute on
         :param attr: the name of the attribute to set
         :type attr: :class:`str`
@@ -496,11 +502,17 @@ class Callbacker(object):
         result = future.result()
         if convertfunc:
             result = convertfunc(result)
+        value = getattr(obj, attr)
         if not key:
-            setattr(obj, attr, result)
+            if isinstance(value, list):
+                if isinstance(result, collections.Iterable):
+                    value.extend(result)
+                else:
+                    value.append(result)
+            else:
+                setattr(obj, attr, result)
         else:
-            d = getattr(obj, attr)
-            d[key] = result
+            value[key] = result
         signal.emit()
 
 
@@ -515,7 +527,8 @@ class DeferLoadMixin(QtCore.QObject):
 
     def __init__(self, *args, **kwargs):
         super(DeferLoadMixin, self).__init__(*args, **kwargs)
-        self.loadingFinished.connect(self.callbacker.load_callback, type=QtCore.Qt.QueuedConnection)
+        self.loadingFinished.connect(self.callbacker.load_callback,
+                                     type=QtCore.Qt.QueuedConnection)
 
     def dummyconvert(self, arg):
         """Needed so pyside can wrap the object when emitting the signal.
@@ -602,6 +615,7 @@ class DeferQtGame(QtGame, DeferLoadMixin):
     boxLoaded = QtCore.Signal()
     logoLoaded = QtCore.Signal()
     topStreamsLoaded = QtCore.Signal()
+    moreTopStreamsLoaded = QtCore.Signal()
 
     def __init__(self, session, cache, name, box, logo, twitchid, viewers=None, channels=None):
         super(DeferQtGame, self).__init__(session, cache, name, box, logo,
@@ -621,14 +635,30 @@ class DeferQtGame(QtGame, DeferLoadMixin):
 
     def top_streams(self, limit=25, force_refresh=False):
         if self._top_streams is self.LOADING:
-            return
+            return []
         if self._top_streams is None or force_refresh:
             self._top_streams = self.LOADING
             loadfunc = functools.partial(self.session.get_streams, game=self, limit=limit)
             self.deferload(loadfunc, '_top_streams', self.topStreamsLoaded)
             return []
-        return self._top_streams[:limit]
+        return self._top_streams
     top_streams.__doc__ = QtGame.top_streams.__doc__
+
+    def load_more_streams(self, limit):
+        """Load more streams
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        if self._more_streams is self.LOADING:
+            return []
+        if not self._top_streams or self._top_streams is self.LOADING:
+            return self._top_streams()
+        self._more_streams = self.LOADING
+        loadfunc = functools.partial(self.session.get_streams, game=self,
+                                     limit=limit, offset=len(self._top_streams))
+        self.deferload(loadfunc, '_top_streams', self.moreTopStreamsLoaded)
 
 
 class DeferQtChannel(QtChannel, DeferLoadMixin):
