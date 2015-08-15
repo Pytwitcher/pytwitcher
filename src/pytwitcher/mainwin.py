@@ -115,7 +115,11 @@ class PyTwitcherWin(QtGui.QMainWindow):
 
 
 class TableView(QtGui.QTableView):
+    """Table view that looses the model, if the root index gets removed.
 
+    This prevents the view from getting the root index assigned at reload.
+    Instead, the model is set to None.
+    """
     def setRootIndex(self, index):
         self.lastroot = index
         super(TableView, self).setRootIndex(index)
