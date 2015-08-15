@@ -21,11 +21,6 @@ class PyTwitcherWin(QtGui.QMainWindow):
         self.setup_ui()
         self.mainmenu.streamsmenu.action_triggered.connect(self.play)
 
-        self.gameview.clicked.connect(self.setgame)
-        self.channelview.clicked.connect(self.setchannel)
-        self.qoview.clicked.connect(self.play)
-        self.followview.clicked.connect(self.setchannel)
-
     def setup_ui(self, ):
         """Create the user interface
 
@@ -41,19 +36,11 @@ class PyTwitcherWin(QtGui.QMainWindow):
         self.reload_pb = QtGui.QPushButton('reload')
         self.tab_widget.setCornerWidget(self.reload_pb)
         self.reload_pb.clicked.connect(self.reload_cb)
-        views = (('Following', 'followview'),
-                 ('Games', 'gameview'),
-                 ('Channels', 'channelview'),
-                 ('Quality', 'qoview'))
-        for tab, attr in views:
-            v = TableView()
-            setattr(self, attr, v)
-            v.setSelectionMode(v.NoSelection)
-            v.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-            v.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-            self.tab_widget.addTab(v, tab)
-        self.gameview.setModel(self.app.topgamesmodel)
-        self.followview.setModel(self.app.followingmodel)
+        self.tab_widget.addTab(self.create_following_view(), 'Following')
+        self.tab_widget.addTab(self.create_games_view(), 'Games')
+        self.tab_widget.addTab(self.create_channels_view(), 'Channels')
+        self.tab_widget.addTab(self.create_quality_view(), 'Quality')
+
         self.tab_widget.setCurrentWidget(self.gameview)
         self.player = player.VideoPlayer(self)
         self.tab_widget.addTab(self.player, 'Player')
@@ -79,6 +66,52 @@ class PyTwitcherWin(QtGui.QMainWindow):
             w = self.toolbar.widgetForAction(a)
             w.setPopupMode(w.InstantPopup)
             w.setStyleSheet('QToolButton::menu-indicator { image: none; }')
+
+    def create_following_view(self, ):
+        """Create the view for the followed streams
+
+        :returns: the created view
+        :rtype: :class:`TableView`
+        :raises: None
+        """
+        self.followview = TableView()
+        self.followview.setModel(self.app.followingmodel)
+        self.followview.clicked.connect(self.setchannel)
+        return self.followview
+
+    def create_games_view(self, ):
+        """Create the view for the games
+
+        :returns: the created view
+        :rtype: :class:`TableView`
+        :raises: None
+        """
+        self.gameview = TableView()
+        self.gameview.setModel(self.app.topgamesmodel)
+        self.gameview.clicked.connect(self.setgame)
+        return self.gameview
+
+    def create_channels_view(self, ):
+        """Create the view for the channels
+
+        :returns: the created view
+        :rtype: :class:`TableView`
+        :raises: None
+        """
+        self.channelview = TableView()
+        self.channelview.clicked.connect(self.setchannel)
+        return self.channelview
+
+    def create_quality_view(self, ):
+        """Create the view for quality options
+
+        :returns: the created view
+        :rtype: :class:`QtGui.QListView`
+        :raises: None
+        """
+        self.qoview = QtGui.QListView()
+        self.qoview.clicked.connect(self.play)
+        return self.qoview
 
     def reload_cb(self, ):
         """Reload the currently open tab
@@ -120,6 +153,21 @@ class TableView(QtGui.QTableView):
     This prevents the view from getting the root index assigned at reload.
     Instead, the model is set to None.
     """
+    def __init__(self, parent=None):
+        """Initizlize a new table view
+
+        :param parent: the parent widget
+        :type parent: :class:`QtGui.QWidget`
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        super(TableView, self).__init__(parent)
+        self.setSelectionMode(self.NoSelection)
+        self.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.verticalHeader().hide()
+
     def setRootIndex(self, index):
         self.lastroot = index
         super(TableView, self).setRootIndex(index)
