@@ -644,15 +644,13 @@ class DeferQtGame(QtGame, DeferLoadMixin):
         return self._top_streams
     top_streams.__doc__ = QtGame.top_streams.__doc__
 
-    def load_more_streams(self, limit):
+    def load_more_streams(self, limit=25):
         """Load more streams
 
         :returns: None
         :rtype: None
         :raises: None
         """
-        if self._more_streams is self.LOADING:
-            return []
         if not self._top_streams or self._top_streams is self.LOADING:
             return self._top_streams()
         self._more_streams = self.LOADING
@@ -1022,18 +1020,31 @@ class GameItem(TreeItem):
         """
         super(GameItem, self).__init__(data, parent)
         self.itemdata().internalobj.topStreamsLoaded.connect(self.create_topstreams)
+        self.itemdata().internalobj.moreTopStreamsLoaded.connect(self.add_topstreams)
         # start loading of top_streams
         self.itemdata().internalobj.top_streams(limit=maxstreams)
         self.maxstreams = maxstreams
 
     def create_topstreams(self, ):
-        """Create topstreams items from the games topstreams
+        """Create topstream items from the games topstreams
 
         :returns: None
         :rtype: None
         :raises: None
         """
         topstreams = self.itemdata().internalobj.top_streams(limit=self.maxstreams)
+        for s in topstreams:
+            data = StreamItemData(s, self.itemdata().size)
+            StreamItem(data, self)
+
+    def add_topstreams(self, ):
+        """Add new topstream items from the games topstreams
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        topstreams = self.itemdata().internalobj.top_streams()[len(self.childItems):]
         for s in topstreams:
             data = StreamItemData(s, self.itemdata().size)
             StreamItem(data, self)
@@ -1049,14 +1060,14 @@ class GameItem(TreeItem):
             self.remove_child(c)
         self.itemdata().internalobj.top_streams(limit=self.maxstreams, force_refresh=True)
 
-    def load_more_setreams(self, ):
+    def load_more_streams(self, ):
         """Load more streams
 
         :returns: None
         :rtype: None
         :raises: None
         """
-        pass
+        self.itemdata().internalobj.load_more_streams(limit=self.maxstreams)
 
 
 class StreamItem(TreeItem):

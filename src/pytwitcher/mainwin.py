@@ -71,9 +71,10 @@ class PyTwitcherWin(QtGui.QMainWindow):
         w = QtGui.QWidget()
         lay = QtGui.QVBoxLayout()
         w.setLayout(lay)
-        lay.addWidget(self.followview)
+        lay.addWidget(widget)
         w.more_pb = QtGui.QPushButton("More")
         lay.addWidget(w.more_pb)
+        return w
 
     def create_following_view(self, ):
         """Create the view for the followed streams
@@ -99,9 +100,9 @@ class PyTwitcherWin(QtGui.QMainWindow):
         self.gameview = TableView()
         self.gameview.setModel(self.app.topgamesmodel)
         self.gameview.clicked.connect(self.setgame)
-        w = self._wrap_with_more_button(self.gameview)
-        w.more_pb.clicked.connect(self.load_more_games)
-        return w
+        self.gametab = self._wrap_with_more_button(self.gameview)
+        self.gametab.more_pb.clicked.connect(self.load_more_games)
+        return self.gametab
 
     def create_channels_view(self, ):
         """Create the view for the channels
@@ -112,9 +113,9 @@ class PyTwitcherWin(QtGui.QMainWindow):
         """
         self.channelview = TableView()
         self.channelview.clicked.connect(self.setchannel)
-        w = self._wrap_with_more_button(self.channelview)
-        w.more_pb.clicked.connect(self.load_more_channels)
-        return w
+        self.channeltab = self._wrap_with_more_button(self.channelview)
+        self.channeltab.more_pb.clicked.connect(self.load_more_channels)
+        return self.channeltab
 
     def create_quality_view(self, ):
         """Create the view for quality options
@@ -146,7 +147,7 @@ class PyTwitcherWin(QtGui.QMainWindow):
         if self.channelview.model() is not index.model():
             self.channelview.setModel(index.model())
         self.channelview.setRootIndex(index)
-        self.tab_widget.setCurrentWidget(self.channelview)
+        self.tab_widget.setCurrentWidget(self.channeltab)
 
     def setchannel(self, index):
         if self.qoview.model() is not index.model():
@@ -160,6 +161,24 @@ class PyTwitcherWin(QtGui.QMainWindow):
         stream = index.parent().data(treemodel.INTERNAL_OBJ_ROLE)
         self.player.play(stream, quality)
 
+    def load_more_follows(self, *args, **kwargs):
+        """Load more channels
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        pass
+
+    def load_more_games(self, *args, **kwargs):
+        """Load more channels
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        pass
+
     def load_more_channels(self, *args, **kwargs):
         """Load more channels
 
@@ -170,8 +189,8 @@ class PyTwitcherWin(QtGui.QMainWindow):
         index = self.channelview.rootIndex()
         if not index.isValid():
             return
-        game = index.data(treemodel.INTERNAL_OBJ_ROLE)
-        game.load_more_streams()
+        gameitem = index.data(treemodel.TREEITEM_ROLE)
+        gameitem.load_more_streams()
 
 
 class TableView(QtGui.QTableView):
