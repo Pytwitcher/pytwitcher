@@ -1019,6 +1019,15 @@ class GameItem(TreeItem):
             self.remove_child(c)
         self.itemdata().internalobj.top_streams(limit=self.maxstreams, force_refresh=True)
 
+    def load_more_setreams(self, ):
+        """Load more streams
+
+        :returns: None
+        :rtype: None
+        :raises: None
+        """
+        pass
+
 
 class StreamItem(TreeItem):
     """Treeitem that automatically loads the quality options
